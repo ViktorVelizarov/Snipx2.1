@@ -4,6 +4,7 @@ import './AddSnippet.css';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { useAuth } from "../AuthProvider";
+import { useNavigate } from 'react-router-dom';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -12,8 +13,9 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const ReactQuill = React.lazy(() => import('react-quill'));
 
 const Snippets = () => {
-
     const { user } = useAuth();
+    const navigate = useNavigate(); // Initialize the navigate function
+
     const [inputText, setInputText] = useState("");
     const [results, setResults] = useState({ green: [], orange: [], red: [], explanations: "", score: "", sentiment: "" });
     const [showOutputs, setShowOutputs] = useState(false);
@@ -23,6 +25,12 @@ const Snippets = () => {
     const [currentScore, setCurrentScore] = useState("");
     const [currentDate, setCurrentDate] = useState("");
     const [loading, setLoading] = useState(false); // Loading state
+
+    useEffect(() => {
+        if (user && user.role === "deleted") {
+            navigate("/login"); // Redirect to login if user is deleted
+        }
+    }, [user, navigate]);
 
     useEffect(() => {
         const now = new Date();
@@ -257,7 +265,9 @@ const Snippets = () => {
                 {showOutputs && (
                     <>
                         <div className="w-full">
+
                             <h2 className="explanation-score-sentiment-title">Explanations</h2>
+
                             <textarea
                                 value={results.explanations}
                                 className="auto-resize mb-2"
@@ -325,4 +335,3 @@ const Snippets = () => {
 };
 
 export default Snippets;
-

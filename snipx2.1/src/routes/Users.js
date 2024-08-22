@@ -6,11 +6,11 @@ function Users() {
     const [users, setUsers] = useState([]);
     const [managerEmails, setManagerEmails] = useState({});
     const [newEmail, setNewEmail] = useState("");
-    const [newRole, setNewRole] = useState("");
+    const [newRole, setNewRole] = useState("user");  // Default role is "user"
     const [newManagerId, setNewManagerId] = useState("");
     const [editingUserId, setEditingUserId] = useState(null);
     const [editingEmail, setEditingEmail] = useState("");
-    const [editingRole, setEditingRole] = useState("");
+    const [editingRole, setEditingRole] = useState("user");  // Default role is "user"
     const [editingManagerId, setEditingManagerId] = useState("");
     const { user } = useAuth();
 
@@ -57,17 +57,20 @@ function Users() {
     };
 
     const handleDelete = async (id) => {
-        try {
-            const response = await fetch(`https://extension-360407.lm.r.appspot.com/api/snipx_users/${id}`, {
-                method: "DELETE",
-            });
-            if (response.ok) {
-                setUsers(users.filter((user) => user.id !== id));
-            } else {
-                console.error("Failed to delete user");
+        const confirmed = window.confirm("Are you sure you want to delete this user?");
+        if (confirmed) {
+            try {
+                const response = await fetch(`https://extension-360407.lm.r.appspot.com/api/snipx_users/${id}`, {
+                    method: "DELETE",
+                });
+                if (response.ok) {
+                    setUsers(users.filter((user) => user.id !== id));
+                } else {
+                    console.error("Failed to delete user");
+                }
+            } catch (error) {
+                console.error("Error deleting user:", error);
             }
-        } catch (error) {
-            console.error("Error deleting user:", error);
         }
     };
 
@@ -130,7 +133,7 @@ function Users() {
                 const newUser = await response.json();
                 setUsers([newUser, ...users]);
                 setNewEmail("");
-                setNewRole("");
+                setNewRole("user");  // Reset role to default "user"
                 setNewManagerId("");
                 fetchManagerEmails([newUser, ...users]); // Fetch emails after creating a user
             } else {
@@ -140,6 +143,9 @@ function Users() {
             console.error("Error creating user:", error);
         }
     };
+
+    // Filter out users with the role "deleted"
+    const filteredUsers = users.filter(user => user.role !== "deleted");
 
     return (
         <div className="users-container">
@@ -156,20 +162,21 @@ function Users() {
                         onChange={(e) => setNewEmail(e.target.value)}
                         className="input-field"
                     />
-                    <input
-                        type="text"
-                        placeholder="Role"
+                    <select
                         value={newRole}
                         onChange={(e) => setNewRole(e.target.value)}
                         className="input-field"
-                    />
+                    >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
                     <select
                         value={newManagerId}
                         onChange={(e) => setNewManagerId(e.target.value)}
                         className="input-field"
                     >
                         <option value="">Select Manager</option>
-                        {users
+                        {filteredUsers
                             .filter((user) => user.role === "admin")
                             .map((user) => (
                                 <option key={user.id} value={user.id}>
@@ -195,7 +202,7 @@ function Users() {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map((user) => (
+                        {filteredUsers.map((user) => (
                             <tr key={user.id}>
                                 <td>{user.id}</td>
                                 <td>
@@ -212,12 +219,14 @@ function Users() {
                                 </td>
                                 <td>
                                     {editingUserId === user.id ? (
-                                        <input
-                                            type="text"
+                                        <select
                                             value={editingRole}
                                             onChange={(e) => setEditingRole(e.target.value)}
                                             className="input-field"
-                                        />
+                                        >
+                                            <option value="user">User</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
                                     ) : (
                                         user.role
                                     )}
@@ -230,7 +239,7 @@ function Users() {
                                             className="input-field"
                                         >
                                             <option value="">Select Manager</option>
-                                            {users
+                                            {filteredUsers
                                                 .filter((user) => user.role === "admin")
                                                 .map((manager) => (
                                                     <option key={manager.id} value={manager.id}>

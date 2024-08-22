@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import axios from "axios";
 import { useAuth } from "../AuthProvider";
+import { useNavigate } from "react-router-dom";
 import { Bar } from 'react-chartjs-2';
 import 'react-quill/dist/quill.snow.css';
 import './WeeklyReports.css';
@@ -10,6 +11,7 @@ const ReactQuill = React.lazy(() => import('react-quill'));
 
 function WeeklyReports() {
     const { user } = useAuth();
+    const navigate = useNavigate(); // Initialize the navigate function for redirection
     const [snippets, setSnippets] = useState([]);
     const [selectedSnippetIds, setSelectedSnippetIds] = useState([]);
     const [weeklyReport, setWeeklyReport] = useState(''); 
@@ -22,6 +24,14 @@ function WeeklyReports() {
         sentiment: "",
     });
     const [chartData, setChartData] = useState({ labels: [], datasets: [] });
+    const [loading, setLoading] = useState(false); // New state for loading spinner
+
+    useEffect(() => {
+        // Redirect to login if user role is 'deleted'
+        if (user.role === "deleted") {
+            navigate("/login");
+        }
+    }, [user, navigate]);
 
     useEffect(() => {
         const fetchSnippets = async () => {
@@ -73,6 +83,7 @@ function WeeklyReports() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        setLoading(true);  // Start loading
         try {
             const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/weeklySnippet", { snippetIds: selectedSnippetIds });
             setWeeklyReport(response.data.weeklyReport);
@@ -80,10 +91,13 @@ function WeeklyReports() {
         } catch (error) {
             console.error("Error submitting snippets:", error);
             alert("Failed to submit snippets.");
+        } finally {
+            setLoading(false);  // Stop loading
         }
     };
 
     const handleAnalyzeSubmit = async () => {
+        setLoading(true);  // Start loading
         try {
             const response1 = await axios.post("https://extension-360407.lm.r.appspot.com/api/analyze", { text: weeklyReport });
             const data1 = response1.data;
@@ -104,6 +118,8 @@ function WeeklyReports() {
         } catch (error) {
             console.error("Error analyzing text:", error);
             alert("Failed to analyze the report.");
+        } finally {
+            setLoading(false);  // Stop loading
         }
     };
 
@@ -177,8 +193,10 @@ function WeeklyReports() {
                             </option>
                         ))}
                     </select>
-                    <button type="submit">
-                        Submit
+
+                    <button type="submit" className="mt-4 p-2 bg-blue-500 text-white rounded">
+                        {loading ? "Submitting..." : "Submit"} {/* Displaying loading text */}
+
                     </button>
                 </form>
             )}
@@ -207,8 +225,10 @@ function WeeklyReports() {
                     className="weekly-report-enriched-text"
                 />
             </Suspense>
-            <button onClick={handleAnalyzeSubmit}>
-                Analyze Report
+
+            <button onClick={handleAnalyzeSubmit} className="mt-4 p-2 bg-yellow-500 text-white rounded">
+                {loading ? "Analyzing..." : "Analyze Report"} {/* Displaying loading text */}
+
             </button>
 
             <div className="flex flex-col items-center w-full max-w-lg mt-8 space-y-4">
@@ -288,9 +308,11 @@ function WeeklyReports() {
                     Approve
                 </button>
             </div>
+
+            {/* Conditionally rendering the loading spinner */}
+            {loading && <div className="loading-spinner">Loading...</div>}
         </main>
     );
 }
 
 export default WeeklyReports;
-

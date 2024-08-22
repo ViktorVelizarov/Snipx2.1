@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
@@ -7,7 +6,8 @@ import 'react-calendar/dist/Calendar.css';
 import './LandingPage.css';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
+
 
 const Home = ({ isDarkMode }) => {
   const { user } = useAuth();
@@ -24,6 +24,8 @@ const Home = ({ isDarkMode }) => {
 
   // Fetch all snippets data when the component mounts
   useEffect(() => {
+   
+    
     const fetchAllSnippets = async () => {
       try {
         const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user", {
