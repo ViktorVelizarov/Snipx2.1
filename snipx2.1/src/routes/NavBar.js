@@ -17,7 +17,7 @@ import SnipXGradientImage from './images/SNIPX-Logo-Gradient.png';
 
 const NavBar = () => {
     const { user, logout, login, auth, checkDatabase} = useAuth();
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Sidebar toggle state
     const [snipXImage, setSnipXImage] = useState(SnipXWhiteImage); // State for image
     const [firebaseUser, loading] = useAuthState(auth);

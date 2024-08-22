@@ -139,7 +139,7 @@
   /* Calendar Header Styles */
 .react-calendar__navigation button {
     color: black; /* Change to a visible color */
-    background-color: var(--bg-color);
+    background-color: #ebedee;
     font-weight: bold;
 }
 
@@ -148,7 +148,7 @@
 }
 
 .react-calendar__navigation {
-    background-color: var(--bg-color); /* Ensure the background is not transparent */
+    background-color: #ebedee; /* Ensure the background is not transparent */
     border-bottom: 1px solid #ddd;
     border-radius: 10px; /* Add rounded corners */
 }
