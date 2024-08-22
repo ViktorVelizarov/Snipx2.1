@@ -22,8 +22,10 @@
   }
   
   .profile-picture {
-    width: 150px;
-    height: 150px;
+    max-width: 150px;
+    max-height: 150px;
+    height:12vh;
+    width:6vw;
     border-radius: 50%;
     background-color: #ccc;
     display: flex;
@@ -90,8 +92,10 @@
   }
   
   .circle {
-    width: 100px;
-    height: 100px;
+    max-width: 100px;
+    max-height: 100px;
+    height:8vh;
+    width:4vw;
     border-radius: 50%;
     background-color: #ddd;
     display: flex;

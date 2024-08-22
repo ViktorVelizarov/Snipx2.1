@@ -16,39 +16,6 @@
     background: linear-gradient(135deg, var(--container-color1), var(--container-color2));
 }
 
-/* Center the login button at the top */
-/* .login-section {
-    grid-column: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-} */
- /* Login button styling
-.auth-container {
-    background-color: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; 
-    padding-top: 20px;
-    width: 100%;
-}
-
-.auth-container button {
-    background: var(--btn-bg-color2);
-    color: white;
-    font-size: 18px;
-    padding: 15px 40px;
-    width: 300px; 
-    max-width: 100%; 
-    border: none; 
-    box-shadow: none; 
-    text-align: center; 
-}
-
-.auth-container button:hover {
-    background: white;
-    color: var(--btn-bg-color2);
-}  */
 
 /* Style adjustments for Company Purpose section */
 .company-purpose {
@@ -157,8 +124,10 @@
     padding: 20px;
     margin-top: 40px;
     border-radius: 10px;
-    width: 150px; /* Set a fixed width for each icon box */
-    height: 150px; /* Set a fixed height for each icon box */
+    max-width: 150px; /* Set a fixed width for each icon box */
+    max-height: 150px; /* Set a fixed height for each icon box */
+    height:15vh;
+    width:7vw;
     color: white; /* White text color */
     transition: transform 0.3s ease; /* Smooth transition for hover effect */
     display: flex;
@@ -168,8 +137,8 @@
 }
 
 .icon-box img {
-    width: 60px; /* Set the size of the icons */
-    height: 60px;
+    max-width: 60px; /* Set the size of the icons */
+    max-height: 60px;
     margin-bottom: 10px;
 }
 
@@ -218,8 +187,10 @@
     background-color: var(--btn-bg-color); /* Pink color */
     transition: transform 0.3s ease;
     border-radius: 50%;
-    width: 120px;
-    height: 120px;
+    max-width: 120px;
+    max-height: 120px;
+    height:14vh;
+    width: 7vw;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -229,8 +200,10 @@
   }
   
   .market-circle.large {
-    width: 180px;
-    height: 180px;
+    max-width: 180px;
+    max-height: 180px;
+    height:21vh;
+    width: 10.5vw;
     font-size: 20px;
   }
   
@@ -259,7 +232,7 @@
   
   .arrow img {
     transition: transform 0.3s ease;
-    width: 100px;
+    max-width: 100px;
     margin-top: 5px;
   }
   
@@ -315,8 +288,8 @@
   }
   
   .team-member img {
-    width: 120px;
-    height: 120px;
+    max-width: 120px;
+    max-height: 120px;
     transition: transform 0.3s ease;
   }
   .team-member img:hover {

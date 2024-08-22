@@ -25,12 +25,12 @@ h1 {
 .table-wrapper {
     display: flex;
     justify-content: space-between; /* Ensure the table and spacer are aligned */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 table {
     width: 95%;
     border-spacing: 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     border-collapse: collapse;
     border-radius: 10px;
     overflow: hidden;
@@ -82,7 +82,7 @@ td {
 .snippets-buttons {
     padding: 8px 12px;
     margin-bottom: 5px;
-    width: 75px;
+    max-width: 75px;
     font-size: 14px;
     border: none;
     border-radius: 5px;

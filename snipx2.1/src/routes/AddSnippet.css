@@ -78,7 +78,8 @@
 
 .snippet-input {
     width: 100%;
-    height: 400px; /* Adjusted height */
+    max-height: 400px; /* Adjusted height */
+    height:50vh;
     border: 1px solid #ddd;
     border-radius: 30px;
     font-size: 16px;
@@ -136,7 +137,6 @@
 
 /* Styling for the explanation, score, and sentiment text areas */
 textarea.auto-resize {
-    width: 100%;
     padding: 10px;
     border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 5px;
@@ -174,8 +174,10 @@ textarea.auto-resize::placeholder {
 /* Loading spinner styling */
 .spinner {
     border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 36px;
-    height: 36px;
+    max-width: 36px;
+    max-height: 36px;
+    height: 12vh;
+    width:6vw;
     border-radius: 50%;
     border-left-color: #09f;
     animation: spin 1s ease infinite;
