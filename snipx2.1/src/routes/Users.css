@@ -3,20 +3,24 @@
     --container-color1: #E4277D;
     --container-color2: #FFB300;
     --btn-bg-color : #E4277D;
+    --colored-text : white;
 }
 
 .users-container {
-    width: 100%;
-    max-width: 1200px;
+    width: 90%;
     margin: 40px auto;
     padding: 20px;
-    background: #f5f5f5; /* Remove gradient */
-    color: #333;
+    background: transparent;
+    color: var(--colored-text);
 }
 .form-inputs {
     display: flex;
     flex-direction: row; /* Align elements vertically */
+    align-items: center;
     gap: 15px; /* Add space between the form elements */
+}
+.form-title{
+    color: var(--colored-text);
 }
 
 
@@ -36,15 +40,22 @@
 
 
 .input-field {
+    height: 45px; /* Ensure consistent height for inputs*/
     padding: 10px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     background-color: rgba(255, 255, 255, 0.8);
     color: #333;
     font-size: 16px;
-    height: 45px; /* Ensure consistent height */
     box-sizing: border-box; /* Ensure padding doesn't affect height */
 }
+select{
+    margin-bottom: 20px;
+}
+.create-button{
+    margin-bottom: 28px;
+}
+
 
 .users-table {
     margin-top: 20px;
@@ -52,6 +63,7 @@
 
 table {
     width: 100%;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
     border-collapse: collapse;
     border-radius: 20px;
     overflow: hidden;

@@ -3,21 +3,20 @@
     --container-color1: #E4277D;
     --container-color2: #FFB300;
     --btn-bg-color : #E4277D;
+    --colored-text:white;
 }
 
 .container {
     max-width: 100%;
     margin: 40px auto;
     padding: 20px;
-    background: linear-gradient(135deg, var(--container-color1), var(--container-color2));
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    background: transparent;
     overflow-x: auto; /* Enable horizontal scrolling within the container if necessary */
 }
 
 h1 {
     font-size: 36px;
-    color: white;
+    color: var(--colored-text);
     text-align: center;
     margin-bottom: 20px;
     padding-bottom: 10px;
@@ -26,6 +25,7 @@ h1 {
 .table-wrapper {
     display: flex;
     justify-content: space-between; /* Ensure the table and spacer are aligned */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 table {

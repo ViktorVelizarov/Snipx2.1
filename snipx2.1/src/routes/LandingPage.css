@@ -1,7 +1,8 @@
 :root {
     --btn-bg-color: #E4277D;
-    --colored-text : white;
-    --graph-line-color: #FFB300;
+    --colored-text : #8C4EA0 ;
+    --graph-line-color: #8C4EA0;
+    --bg-color:#ebedee;
 }
 
 
@@ -138,7 +139,7 @@
   /* Calendar Header Styles */
 .react-calendar__navigation button {
     color: black; /* Change to a visible color */
-    background-color: #ebedee;
+    background-color: var(--bg-color);
     font-weight: bold;
 }
 
@@ -147,7 +148,7 @@
 }
 
 .react-calendar__navigation {
-    background-color: #ebedee; /* Ensure the background is not transparent */
+    background-color: var(--bg-color); /* Ensure the background is not transparent */
     border-bottom: 1px solid #ddd;
     border-radius: 10px; /* Add rounded corners */
 }

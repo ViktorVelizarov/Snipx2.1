@@ -179,6 +179,7 @@ function Users() {
                     </select>
                     <button onClick={handleCreateUser} className="create-button">Create</button>
                 </div>
+                <h2 className="form-title">List of Users</h2>
             </div>
 
             {/* Users Table */}

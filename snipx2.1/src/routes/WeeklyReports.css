@@ -1,9 +1,6 @@
 /* Weekly Report Page Styling */
 
 :root {
-    --container-color1: #E4277D;
-    --container-color2: #FFB300;
-    --btn-bg-color : #E4277D;
     --colored-text: white; /* Assuming you want to use the same black text color as before */
 }
 

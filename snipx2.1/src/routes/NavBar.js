@@ -12,10 +12,14 @@ import Box from "@mui/material/Box";
 import GoogleIcon from "@mui/icons-material/Google";
 import Button from "@mui/material/Button";
 
+import SnipXWhiteImage from './images/SNIPX-Logo-White.png';
+import SnipXGradientImage from './images/SNIPX-Logo-Gradient.png';
+
 const NavBar = () => {
     const { user, logout, login, auth, checkDatabase} = useAuth();
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Sidebar toggle state
+    const [snipXImage, setSnipXImage] = useState(SnipXWhiteImage); // State for image
     const [firebaseUser, loading] = useAuthState(auth);
     const navigate = useNavigate();
 
@@ -43,6 +47,7 @@ const NavBar = () => {
             document.documentElement.style.setProperty('--container-color1', 'rgb(100, 100, 100)');
             document.documentElement.style.setProperty('--container-color2', 'rgb(100, 100, 100)');
             document.documentElement.style.setProperty('--colored-text', 'white');
+            setSnipXImage(SnipXGradientImage); // Set image for dark mode
         } else {
             document.documentElement.style.setProperty('--navbar-color', '#8C4EA0');
             document.documentElement.style.setProperty('--navbar-color2', '#E4277D');
@@ -53,6 +58,7 @@ const NavBar = () => {
             document.documentElement.style.setProperty('--container-color1', '#8C4EA0');
             document.documentElement.style.setProperty('--container-color2', '#E4277D');
             document.documentElement.style.setProperty('--colored-text', '#8C4EA0');
+            setSnipXImage(SnipXWhiteImage); // Set image for light mode
         }
         setIsDarkMode(!isDarkMode);
     };
@@ -65,8 +71,7 @@ const NavBar = () => {
         <>
             <nav className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
                 <div className="logo">
-                    <h2>SNIP<span>X</span></h2>
-                    <p>by ScaleUp</p>
+                    <Link to="/home"><img src={snipXImage} alt="SnipX by ScaleUP" /></Link>
                 </div>
                 <ul>
                     {user ? (

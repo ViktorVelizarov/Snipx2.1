@@ -1,9 +1,10 @@
 /* Global Styles */
-
 :root {
-    --navbar-color: #FFB300;
+    --navbar-color: #8C4EA0;
+    --navbar-color2:#E4277D;
     --bg-color : #ebedee;
-    --btn-bg-color: #E4277D;
+    --btn-bg-color: #8C4EA0;
+    --btn-bg-color2: #E4277D;
 }
 
 
@@ -77,20 +78,13 @@ textarea:focus {
 }
 
 .sidebar .logo {
-    text-align: center;
+    margin-top: 20px;
     margin-bottom: 30px;
 }
 
-.sidebar .logo h2 {
-    color: white;
-    font-size: 24px;
-    margin: 0;
-}
-
-.sidebar .logo p {
-    color: white;
-    font-size: 12px;
-    margin: 0;
+.sidebar .logo img{
+    width: 120px;
+    height: auto;
 }
 
 .sidebar ul {

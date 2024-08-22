@@ -1,9 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
+import { FaAngleDoubleLeft, FaAngleDoubleRight, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import './Snippets.css';
 
 function Snippets() {
   const [snippets, setSnippets] = useState([]);
   const [users, setUsers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const snippetsPerPage = 3;
   const [editingSnippetId, setEditingSnippetId] = useState(null);
   const [editingSnippet, setEditingSnippet] = useState({
     type: "",
@@ -138,9 +141,17 @@ function Snippets() {
     });
   };
 
+  // Calculate pagination details
+  const indexOfLastSnippet = currentPage * snippetsPerPage;
+  const indexOfFirstSnippet = indexOfLastSnippet - snippetsPerPage;
+  const currentSnippets = snippets.slice(indexOfFirstSnippet, indexOfLastSnippet);
+  const totalPages = Math.ceil(snippets.length / snippetsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="container mx-auto p-4"> {/* Updated container class */}
-    <h1 className="text-3xl font-bold text-white mb-6 text-center">Snippets</h1>
+    <h1 className="text-3xl font-bold text-white mb-6 text-center">All Snippets</h1>
 
     <div className="table-wrapper overflow-x-auto">
       <table className="min-w-full bg-gradient-to-r from-ffb300 to-e4277d border border-gray-300 rounded-lg">
@@ -161,7 +172,7 @@ function Snippets() {
           </tr>
           </thead>
           <tbody>
-          {snippets.map((snippet,index) => (
+          {currentSnippets.map((snippet,index) => (
               <tr key={snippet.id} className="bg-white bg-opacity-60 border-t border-gray-300">
                 <td className="py-2 px-4">{snippet.id}</td>
                 <td className="py-2 px-4">{editingSnippetId === snippet.id ? (
@@ -344,6 +355,44 @@ function Snippets() {
         </table>
         {/* Transparent spacer */}
         <div className="spacer"><p>111</p></div>
+      </div>
+      <div className="pagination">
+        {/* First and Previous Buttons */}
+        {currentPage > 1 && (
+          <>
+            <button className="pagination-button" onClick={() => paginate(1)}>
+              <FaAngleDoubleLeft  />
+            </button>
+            <button className="pagination-button" onClick={() => paginate(currentPage - 1)}>
+              <FaAngleLeft  />
+            </button>
+          </>
+        )}
+
+        {/* Page Numbers */}
+        {Array.from({ length: totalPages }, (_, index) => index + 1)
+          .filter(page => page === currentPage || (page >= currentPage - 2 && page <= currentPage + 2))
+          .map(page => (
+            <button
+              key={page}
+              onClick={() => paginate(page)}
+              className={`pagination-button ${currentPage === page ? 'active' : ''}`}
+            >
+              {page}
+            </button>
+          ))}
+
+        {/* Next and Last Buttons */}
+        {currentPage < totalPages && (
+          <>
+            <button className="pagination-button" onClick={() => paginate(currentPage + 1)}>
+              <FaAngleRight />
+            </button>
+            <button className="pagination-button" onClick={() => paginate(totalPages)}>
+              <FaAngleDoubleRight  />
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
