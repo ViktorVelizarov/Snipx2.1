@@ -58,8 +58,7 @@ textarea:focus {
 
 /* Sidebar Styles */
 .sidebar {
-    max-width: 250px;
-    width:15vw;
+    width: 250px;
     height: 100vh;
     background: linear-gradient(45deg, var(--navbar-color), var(--navbar-color2));
     position: fixed;
@@ -84,7 +83,7 @@ textarea:focus {
 }
 
 .sidebar .logo img{
-    max-width: 120px;
+    width: 120px;
     height: auto;
 }
 
@@ -155,7 +154,7 @@ textarea:focus {
 
 @media (max-width: 768px) {
     .sidebar {
-        max-width: 200px;
+        width: 200px;
     }
 
     .toggle-btn {

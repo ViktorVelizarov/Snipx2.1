@@ -1,6 +1,9 @@
 /* Weekly Report Page Styling */
 
 :root {
+    --container-color1: #E4277D;
+    --container-color2: #FFB300;
+    --btn-bg-color : #E4277D;
     --colored-text: white; /* Assuming you want to use the same black text color as before */
 }
 
@@ -35,8 +38,7 @@
     text-align: left; /* Align text to the left */
     border-radius: 20px;
     border: 1px solid rgba(0, 0, 0, 0.6);
-    max-height: 350px;
-    height:30vh;
+    height: 350px;
 }
 
 /* Style for the ReactQuill container */
@@ -109,20 +111,3 @@ h2 {
 .text-red-500 {
     color: #dc3545;
 }
-
-
-
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top: 4px solid #3498db;
-    max-width: 20px;
-    max-height: 20px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
