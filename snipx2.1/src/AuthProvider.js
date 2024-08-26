@@ -33,7 +33,7 @@ export const AuthProvider = () => {
   // Initialize Google auth provider and Firebase auth
   const googleProvider = new GoogleAuthProvider();
   const auth = getAuth();
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState(null);
   console.log("current user:")
   console.log(user)
 
