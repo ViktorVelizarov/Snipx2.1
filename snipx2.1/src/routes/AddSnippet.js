@@ -93,7 +93,7 @@ const Snippets = () => {
 
     const handleApprove = async () => {
         setLoading(true); // Start loading
-
+    
         const payload = {
             snipx_user_id: user.id,
             type: "daily",
@@ -106,7 +106,7 @@ const Snippets = () => {
             score: results.score,
             sentiment: results.sentiment,
         };
-
+    
         try {
             const response = await fetch(`https://extension-360407.lm.r.appspot.com/api/snipx_snippets`, {
                 method: "POST",
@@ -115,23 +115,29 @@ const Snippets = () => {
                 },
                 body: JSON.stringify(payload),
             });
-
+    
             if (!response.ok) {
                 throw new Error("Failed to send data to the API");
             }
-
+    
             const result = await response.json();
             console.log("API response:", result);
-
+    
             // Show an alert when the response is received
             window.alert("Data has been successfully approved!");
-
+    
             if (currentScore !== "" && currentDate !== "") {
                 setScores([...scores, parseInt(currentScore)]);
                 setDates([...dates, currentDate]);
-                setCurrentScore("");
-                setCurrentDate("");
             }
+    
+            // Reset all fields after approving
+            setInputText("");  // Reset inputText
+            setResults({ green: [], orange: [], red: [], explanations: "", score: "", sentiment: "" });
+            setCurrentScore("");
+            setCurrentDate(new Date().toISOString().slice(0, 10));  // Reset date to current date
+            setShowOutputs(false);  // Hide outputs
+    
         } catch (error) {
             console.error("Error:", error);
             window.alert("An error occurred while approving the data.");
@@ -139,6 +145,7 @@ const Snippets = () => {
             setLoading(false); // Stop loading
         }
     };
+    
 
     const data = {
         labels: dates,
