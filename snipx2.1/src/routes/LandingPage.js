@@ -6,8 +6,6 @@ import 'react-calendar/dist/Calendar.css';
 import './LandingPage.css';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
-import { Navigate } from "react-router-dom";
-
 
 const Home = ({ isDarkMode }) => {
   const { user } = useAuth();
@@ -22,10 +20,7 @@ const Home = ({ isDarkMode }) => {
   const [snippets, setSnippets] = useState([]); // Store all snippets
   const navigate = useNavigate(); // Get the navigate function
 
-  // Fetch all snippets data when the component mounts
   useEffect(() => {
-   
-    
     const fetchAllSnippets = async () => {
       try {
         const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user", {
@@ -42,14 +37,44 @@ const Home = ({ isDarkMode }) => {
     }
   }, [user]);
 
-    // Update chart data whenever a new date is selected on the calendar
-    useEffect(() => {
-        const filteredSnippets = filterSnippetsBySelectedRange(selectedDate);
-        updateChartData(filteredSnippets);
-      }, [selectedDate, snippets, isDarkMode]); // Re-run when selectedDate, snippets, or isDarkMode changes
-    
+  useEffect(() => {
+    const filteredSnippets = filterSnippetsBySelectedRange(selectedDate);
+    updateChartData(filteredSnippets);
+  }, [selectedDate, snippets, isDarkMode]); // Re-run when selectedDate, snippets, or isDarkMode changes
 
-  // Function to update chart data based on current CSS variable values
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set text color based on dark mode
+        },
+      },
+      title: {
+        display: true,
+        text: 'Sentiment Scores Over Time',
+        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set title color
+      },
+      tooltip: {
+        bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set tooltip text color
+        titleColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // X-axis labels color
+        },
+      },
+      y: {
+        ticks: {
+          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Y-axis labels color
+        },
+      },
+    },
+  };
+
   const updateChartData = (filteredSnippets) => {
     const sortedSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
     const scores = sortedSnippets.map(snippet => snippet.score);
@@ -71,20 +96,17 @@ const Home = ({ isDarkMode }) => {
     calculateAverageScore(scores); // Calculate average score
     updateOverviewData(sortedSnippets); // Update overview data
 
-    // Update chart instance if it exists
     if (chartRef.current) {
       chartRef.current.update();
     }
   };
 
-  // Function to filter snippets by the selected range (7 days around the selected date)
   const filterSnippetsBySelectedRange = (selectedDate) => {
     const today = new Date();
     const selectedDay = new Date(selectedDate);
     let startDayOffset = 3;
     let endDayOffset = 3;
 
-    // Adjust the range based on the proximity to today
     if (today.toDateString() === selectedDay.toDateString()) {
       startDayOffset = 6;
       endDayOffset = 0;
@@ -101,7 +123,6 @@ const Home = ({ isDarkMode }) => {
     const endDate = new Date(selectedDay);
     endDate.setDate(selectedDay.getDate() + endDayOffset);
 
-    // Filter snippets that fall within the adjusted range
     const filteredSnippets = snippets.filter(snippet => {
       const snippetDate = new Date(snippet.date);
       return snippetDate >= startDate && snippetDate <= endDate;
@@ -110,14 +131,12 @@ const Home = ({ isDarkMode }) => {
     return filteredSnippets;
   };
 
-  // Calculate the average score from the scores array
   const calculateAverageScore = (scores) => {
     const total = scores.reduce((sum, score) => sum + parseFloat(score), 0);
     const average = total / scores.length || 0;
     setAverageScore(average.toFixed(2)); // Set average score to two decimal places
   };
 
-  // Update the overview data for the selected date range
   const updateOverviewData = (filteredSnippets) => {
     const overviewData = filteredSnippets.map(snippet => ({
       date: new Date(snippet.date).toLocaleDateString(),
@@ -129,12 +148,10 @@ const Home = ({ isDarkMode }) => {
     setOverviewData(overviewData);
   };
 
-    // Function to handle the chart click and navigate to add-snippet page
-    const handleChartClick = () => {
-        navigate('/graphs');
-    };
+  const handleChartClick = () => {
+    navigate('/graphs');
+  };
 
-  // Function to handle date changes in the calendar
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
@@ -184,7 +201,12 @@ const Home = ({ isDarkMode }) => {
 
       <div  onClick={handleChartClick} style={{ cursor: 'pointer' }} className="analysis-section">
         <h2>Sentiment Analysis</h2>
-            <Line className="sentiment-analysis-graph" ref={chartRef} data={chartData} />
+            <Line className="sentiment-analysis-graph" 
+              data={chartData}
+              options={chartOptions} // Add the options here
+              ref={chartRef}
+              onClick={handleChartClick} // Handle chart clicks 
+            />
         <div className="average-score">
           <div className="circle">{averageScore}</div>
         </div>

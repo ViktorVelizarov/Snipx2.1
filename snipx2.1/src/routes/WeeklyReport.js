@@ -205,12 +205,38 @@ function WeeklyReports() {
                 <div className="w-full max-w-md mt-8">
                     <Bar
                         data={chartData}
-                        options={{
+                        options = {{
+                            responsive: true,
+                            plugins: {
+                              legend: {
+                                labels: {
+                                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set text color based on dark mode
+                                },
+                              },
+                              title: {
+                                display: true,
+                                text: 'Sentiment Scores Over Time',
+                                color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set title color
+                              },
+                              tooltip: {
+                                bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set tooltip text color
+                                titleColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                              },
+                            },
                             scales: {
-                                y: {
-                                    beginAtZero: true
-                                }
-                            }
+                                x: {
+                                    ticks: {
+                                      color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // X-axis labels color
+                                    },
+                                  },
+                                  y: {
+                                    ticks: {
+                                      color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Y-axis labels color
+                                    },
+                                    beginAtZero: true,
+                                  },
+                            },
                         }}
                     />
                 </div>

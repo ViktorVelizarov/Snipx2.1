@@ -6,14 +6,29 @@
     --colored-text:#8C4EA0;
 }
 
+/* Apply specific background for the login page */
+.login-page-container {
+  background: linear-gradient(45deg, var(--container-color1), var(--container-color2));
+  background-size: cover;
+  background-repeat: no-repeat;
+  margin: 0;
+  height: 100%; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
+  display: flex;
+  justify-content: center; /* Center content horizontally */
+}
+
+/* Keep the original layout of your content */
 .unconnected-landing-page {
-    display: grid;
-    grid-template-rows: auto repeat(6, 1fr); /* Create a single column with multiple rows */
-    grid-template-columns: 1fr; /* Only one column */
-    padding: 40px;
-    margin-left: 40px;
-    margin-right: 40px;
-    background: linear-gradient(45deg, var(--container-color1), var(--container-color2));
+  display: grid;
+  grid-template-rows: auto repeat(6, 1fr); /* Create a single column with multiple rows */
+  grid-template-columns: 1fr; /* Only one column */
+  padding: 40px;
+  margin-left: 40px;
+  margin-right: 40px;
+  /* No need to set height or width for this class */
+  position: relative; /* Ensure content is positioned within the page */
+  background: transparent; /* Keep content background transparent */
 }
 
 
@@ -260,63 +275,111 @@
   }
 
 /* Style adjustments for Team section */
-  .team {
-    text-align: center;
-    background-color: transparent;
-  }
-  
-  .team h2 {
-    font-size: 36px;
-    font-weight: bold;
-    color: white;
-    margin-bottom: 40px;
-  }
-  
-  .team-members {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-  }
-  
-  .team-member {
-    text-align: center;
-  }
-  
-  .team-member img {
-    width: 120px;
-    height: 120px;
-    transition: transform 0.3s ease;
-  }
-  .team-member img:hover {
-    transform:scale(1.1);
-  }
-  
-  .team-member h3 {
-    font-size: 20px;
-    color: white;
-    margin-bottom: 5px;
-  }
-  
-  .team-member p {
-    font-size: 16px;
-    color: rgba(255,255,255,0.9);
-    margin: 0;
-  }
-  
+/* Wrapper to center the team section */
+.center-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Ensure that the team section is centered */
+.team {
+  width: 100%;
+  max-width: 1200px; /* You can adjust this max-width based on your design */
+  text-align: center;
+  background-color: transparent;
+}
+
+.team h2 {
+  font-size: 36px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+/* Updated Team Members and Descriptions Layout */
+.team-members,
+.team-descriptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+  justify-items: center;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.team-member {
+  text-align: center;
+}
+
+.team-member img {
+  width: 120px;
+  height: 120px;
+  transition: transform 0.3s ease;
+}
+
+.team-member img:hover {
+  transform: scale(1.1);
+}
+
+.team-member h3 {
+  font-size: 20px;
+  color: white;
+  margin-bottom: 5px;
+}
+
+.team-member p {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+.team-descriptions ul {
+  list-style-type: disc;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.team-descriptions ul li {
+  margin-bottom: 10px;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 768px) {
+  .team-members,
   .team-descriptions {
-    display: flex;
-    justify-content: space-between;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 15px;
   }
-  
+}
+
+@media (max-width: 480px) {
+  .team-members,
+  .team-descriptions {
+      grid-template-columns: 1fr;
+      gap: 10px;
+  }
+
+  .team-member img {
+      width: 100px;
+      height: 100px;
+  }
+
+  .team-member h3 {
+      font-size: 18px;
+  }
+
+  .team-member p {
+      font-size: 14px;
+  }
+
   .team-descriptions ul {
-    list-style-type: disc;
-    text-align: center;
-    color: rgba(255,255,255,0.9);
+      text-align: left;
   }
-  
-  .team-descriptions ul li {
-    margin-bottom: 10px;
-  }
+}
+
 
 
 /* Style adjustments for Landscape section */

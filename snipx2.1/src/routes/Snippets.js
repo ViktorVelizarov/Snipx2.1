@@ -357,43 +357,53 @@ function Snippets() {
         <div className="spacer"><p>111</p></div>
       </div>
       <div className="pagination">
-        {/* First and Previous Buttons */}
-        {currentPage > 1 && (
-          <>
-            <button className="pagination-button" onClick={() => paginate(1)}>
-              <FaAngleDoubleLeft  />
+            {/* First Page Button */}
+            <button onClick={() => paginate(1)} disabled={currentPage === 1} className="pagination-button">
+            <FaAngleDoubleLeft  />
             </button>
-            <button className="pagination-button" onClick={() => paginate(currentPage - 1)}>
-              <FaAngleLeft  />
-            </button>
-          </>
-        )}
 
-        {/* Page Numbers */}
-        {Array.from({ length: totalPages }, (_, index) => index + 1)
-          .filter(page => page === currentPage || (page >= currentPage - 2 && page <= currentPage + 2))
-          .map(page => (
-            <button
-              key={page}
-              onClick={() => paginate(page)}
-              className={`pagination-button ${currentPage === page ? 'active' : ''}`}
-            >
-              {page}
+            {/* Previous Page Button */}
+            <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="pagination-button">
+            <FaAngleLeft  />
             </button>
-          ))}
 
-        {/* Next and Last Buttons */}
-        {currentPage < totalPages && (
-          <>
-            <button className="pagination-button" onClick={() => paginate(currentPage + 1)}>
-              <FaAngleRight />
+            {/* Previous Two Pages */}
+            {currentPage > 2 && (
+                <button onClick={() => paginate(currentPage - 2)} className="pagination-button">
+                    {currentPage - 2}
+                </button>
+            )}
+            {currentPage > 1 && (
+                <button onClick={() => paginate(currentPage - 1)} className="pagination-button">
+                    {currentPage - 1}
+                </button>
+            )}
+
+            {/* Current Page */}
+            <button className="pagination-button active">{currentPage}</button>
+
+            {/* Next Two Pages */}
+            {currentPage < totalPages && (
+                <button onClick={() => paginate(currentPage + 1)} className="pagination-button">
+                    {currentPage + 1}
+                </button>
+            )}
+            {currentPage < totalPages - 1 && (
+                <button onClick={() => paginate(currentPage + 2)} className="pagination-button">
+                    {currentPage + 2}
+                </button>
+            )}
+
+            {/* Next Page Button */}
+            <button onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} className="pagination-button">
+            <FaAngleRight />
             </button>
-            <button className="pagination-button" onClick={() => paginate(totalPages)}>
-              <FaAngleDoubleRight  />
+
+            {/* Last Page Button */}
+            <button onClick={() => paginate(totalPages)} disabled={currentPage === totalPages} className="pagination-button">
+            <FaAngleDoubleRight />
             </button>
-          </>
-        )}
-      </div>
+        </div>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 :root{
     --colored-text:white;
+    --black-text:black;
+    --pagination-disabled: #ccc;
 }
 
 .snippets-page {
@@ -57,7 +59,7 @@
 .pagination-button {
     border: none;
     background: none;
-    color: black;
+    color: var(--black-text);
     font-size: 18px;
     margin: 0 5px;
     cursor: pointer;
@@ -74,5 +76,5 @@
 
 .pagination-button:disabled {
     cursor: not-allowed;
-    color: #ccc;
+    color: var(--pagination-disabled);
 }

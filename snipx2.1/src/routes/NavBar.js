@@ -47,6 +47,8 @@ const NavBar = () => {
             document.documentElement.style.setProperty('--container-color1', 'rgb(100, 100, 100)');
             document.documentElement.style.setProperty('--container-color2', 'rgb(100, 100, 100)');
             document.documentElement.style.setProperty('--colored-text', 'white');
+            document.documentElement.style.setProperty('--black-text', 'white');
+            document.documentElement.style.setProperty('--pagination-disabled', 'rgb(100,100,100)');
             setSnipXImage(SnipXGradientImage); // Set image for dark mode
         } else {
             document.documentElement.style.setProperty('--navbar-color', '#8C4EA0');
@@ -58,6 +60,8 @@ const NavBar = () => {
             document.documentElement.style.setProperty('--container-color1', '#8C4EA0');
             document.documentElement.style.setProperty('--container-color2', '#E4277D');
             document.documentElement.style.setProperty('--colored-text', '#8C4EA0');
+            document.documentElement.style.setProperty('--black-text', 'black');
+            document.documentElement.style.setProperty('--pagination-disabled', '#ccc');
             setSnipXImage(SnipXWhiteImage); // Set image for light mode
         }
         setIsDarkMode(!isDarkMode);
@@ -99,14 +103,6 @@ const NavBar = () => {
                                     </li>
                                 </>
                             )}
-                            <li>
-                                <Link to="#" onClick={(e) => {
-                                    e.preventDefault();
-                                    toggleColors();
-                                }}>
-                                    {isDarkMode ? <><FaRegCircle /> Switch Dark Mode</> : <><FaCircle /> Switch Scaleup Mode</>}
-                                </Link>
-                            </li>
                             <li className="logout">
                                 <Link to="/login" onClick={logout}><FaSignOutAlt /> Log Out</Link>
                             </li>
@@ -116,6 +112,14 @@ const NavBar = () => {
                             <Link to="/login" onClick={handleSubmit}><FaSignInAlt />Login</Link>
                         </li>
                     )}
+                    <li>
+                                <Link to="#" onClick={(e) => {
+                                    e.preventDefault();
+                                    toggleColors();
+                                }}>
+                                    {isDarkMode ? <><FaRegCircle /> Switch Dark Mode</> : <><FaCircle /> Switch Scaleup Mode</>}
+                                </Link>
+                            </li>
                 </ul>
             </nav>
             <div className="toggle-btn" onClick={toggleSidebar}>
