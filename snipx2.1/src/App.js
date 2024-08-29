@@ -1,4 +1,5 @@
 import Users from "./routes/Users";
+import Teams from "./routes/Teams";
 import Snippets from "./routes/Snippets";
 import AddSnippet from "./routes/AddSnippet";
 import MySnippets from "./routes/MySnippets";
@@ -41,6 +42,7 @@ export const router = createBrowserRouter(
           
           <Route path="snippets" element={<Snippets />} />
           <Route path="users" element={<Users />} />
+          <Route path="teams" element={<Teams />} />
         </Route>
       </Route>
     </Route>

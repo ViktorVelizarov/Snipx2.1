@@ -74,6 +74,9 @@ const MainLayout = () => {
                       <ListItemText>Users</ListItemText>
                     </MenuItem>
                   </NavLink>
+
+              
+
                   <MenuItem onClick={logout}>
                     <ListItemIcon>
                       <LogoutIcon fontSize="small" />

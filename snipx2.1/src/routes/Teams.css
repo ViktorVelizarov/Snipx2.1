@@ -1,0 +1,104 @@
+/* Teams Page Styling */
+:root {
+    --container-color1: #E4277D;
+    --container-color2: #FFB300;
+    --btn-bg-color : #E4277D;
+    --colored-text : white;
+}
+
+.teams-container {
+    width: 90%;
+    margin: 40px auto;
+    padding: 20px;
+    background: transparent;
+    color: var(--colored-text);
+}
+
+.form-inputs {
+    display: flex;
+    flex-direction: row; /* Align elements horizontally */
+    align-items: center;
+    gap: 15px; /* Add space between the form elements */
+}
+
+.form-title {
+    color: var(--colored-text);
+}
+
+.page-title {
+    font-size: 28px;
+    color: #E4277D; /* Update title color */
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.new-team-form {
+    display: flex;
+    flex-direction: column; /* Align elements vertically */
+    align-items: flex-start; /* Align elements to the left */
+    margin-bottom: 20px;
+}
+
+.input-field {
+    height: 45px; /* Ensure consistent height for inputs */
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #333;
+    font-size: 16px;
+    box-sizing: border-box; /* Ensure padding doesn't affect height */
+}
+
+select {
+    margin-bottom: 20px;
+}
+
+.create-button {
+    margin-bottom: 28px;
+}
+
+.teams-table {
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+    border-collapse: collapse;
+    border-radius: 20px;
+    overflow: hidden;
+    background-color: white;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    color: #555;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+.edit-button, .delete-button, .save-button, .cancel-button {
+    background: linear-gradient(45deg, var(--btn-bg-color), var(--btn-bg-color2));
+    margin-right: 10px;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.edit-button:hover, .delete-button:hover, .save-button:hover, .cancel-button:hover {
+    background: white;
+    color: var(--btn-bg-color2);
+}

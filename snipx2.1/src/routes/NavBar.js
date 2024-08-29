@@ -101,6 +101,9 @@ const NavBar = () => {
                                     <li>
                                         <Link to="/users"><FaUsers /> Users</Link>
                                     </li>
+                                    <li>
+                                        <Link to="/teams"><FaUsers /> Teams</Link>
+                                    </li>
                                 </>
                             )}
                             <li className="logout">
