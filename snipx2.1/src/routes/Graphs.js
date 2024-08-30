@@ -33,15 +33,22 @@ const Graphs = () => {
     }, [startDate, endDate, selectedGraph, snippets]);
 
     const fetchUsers = async () => {
-      try {
-        const response = await fetch("https://extension-360407.lm.r.appspot.com/api/snipx_users");
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
+        try {
+            const response = await fetch("https://extension-360407.lm.r.appspot.com/api/company_users", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(user),
+            });
+            const data = await response.json();
+            console.log("received users:", users)
+            setUsers(data);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
     };
-  
+
 
     const fetchTeams = async () => {
         try {
