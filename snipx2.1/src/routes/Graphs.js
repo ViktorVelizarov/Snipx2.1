@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
@@ -20,6 +21,7 @@ const Graphs = () => {
     const [selectedUserOrTeam, setSelectedUserOrTeam] = useState(user); // Default to the current user
     const [selectedEntityType, setSelectedEntityType] = useState('users'); // Default to 'users'
     const [isFavorite, setIsFavorite] = useState(false); // State for toggling favorite
+    const navigate = useNavigate(); // Get the navigate function
 
     useEffect(() => {
         fetchUsers();
@@ -147,6 +149,10 @@ const Graphs = () => {
     const toggleFavorite = () => {
         setIsFavorite(!isFavorite); // Toggle the favorite state
     };
+
+    const GoToFavoriteGraphs = () => {
+        navigate('/favorite-graphs');
+      };
     
     return (
         <div className="graphs-page">
@@ -193,7 +199,7 @@ const Graphs = () => {
                         <button onClick={toggleFavorite} className="favorite-button">
                             {isFavorite ? <FaStar size={24} /> : <FaRegStar size={24} />}
                         </button>
-                        <button className="see-favorites-button">
+                        <button className="see-favorites-button" onClick={GoToFavoriteGraphs}>
                             See Favorite Graphs
                         </button>
                     </div>
