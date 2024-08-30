@@ -92,6 +92,9 @@ const NavBar = () => {
                             <li>
                                 <Link to="/my-snippets"><FaClipboardList /> My Snippets</Link>
                             </li>
+                            <li>
+                                <Link to="/graphs"><FaChartBar /> Graphs</Link>
+                            </li>
 
                             {user.role === 'admin' && (
                                 <>

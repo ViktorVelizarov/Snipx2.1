@@ -1,3 +1,6 @@
+/* Graphs.css */
+
+/* Page design */
 .graphs-page {
     display: flex;
     flex-direction: column;
@@ -8,45 +11,91 @@
     min-height: 100vh;
 }
 
-.admin-options {
-    margin-bottom: 20px;
+.page-title {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 80px;
 }
 
-.admin-options label {
-    margin-right: 10px;
-}
-
-.admin-options select {
-    margin-right: 20px;
-    padding: 5px;
-}
-
-.graph-options {
-    margin-bottom: 20px;
-}
-
-.graph-options label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-.graph-container {
-    margin-top: 20px;
-}
-
-.date-selection {
+/* Dropdown styling */
+.dropdowns-container {
     display: flex;
-    justify-content: space-around;
-    width: 100%;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 60px;
 }
 
-.graph-selection {
+.dropdown-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.dropdown-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+
+/* Graph and date container */
+.chart-and-date-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 80px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+/* Date range picker */
+.date-range-picker {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    overflow: hidden;
+    min-width: 350px;
     margin-top: 20px;
-    text-align: center;
 }
 
+.graphs-page .react-calendar__tile {
+    border-radius: 0 !important; /* Remove border radius for tiles */
+}
+
+/* Graph section */
 .chart-section {
-    margin-top: 30px;
+    flex: 3;
+    min-width: 700px;
+    min-height: 400px; /* Set minimum height */
+    height: 100%; /* Ensure the chart takes the full height of its container */
+}
+
+/* Controls container */
+.controls-container {
     width: 100%;
-    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Favorite buttons */
+.favorite-group {
+    display: flex;
+    gap: 10px;
+}
+
+.favorite-button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    color: var(--btn-bg-color2);
+}
+
+.see-favorites-button {
+    background-color: var(--btn-bg-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    cursor: pointer;
 }

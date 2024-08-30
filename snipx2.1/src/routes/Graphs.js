@@ -5,6 +5,7 @@ import axios from 'axios';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import './Graphs.css';
+import { FaRegStar, FaStar } from 'react-icons/fa'; // Import star icons
 
 const Graphs = () => {
     const { user } = useAuth();
@@ -18,6 +19,7 @@ const Graphs = () => {
     const [teams, setTeams] = useState([]);
     const [selectedUserOrTeam, setSelectedUserOrTeam] = useState(user); // Default to the current user
     const [selectedEntityType, setSelectedEntityType] = useState('users'); // Default to 'users'
+    const [isFavorite, setIsFavorite] = useState(false); // State for toggling favorite
 
     useEffect(() => {
         fetchUsers();
@@ -42,13 +44,11 @@ const Graphs = () => {
                 body: JSON.stringify(user),
             });
             const data = await response.json();
-            console.log("received users:", users)
             setUsers(data);
         } catch (error) {
             console.error("Error fetching users:", error);
         }
     };
-
 
     const fetchTeams = async () => {
         try {
@@ -134,101 +134,118 @@ const Graphs = () => {
       }
   };
   
-
-    const handleStartDateChange = (date) => {
-        setStartDate(date);
-    };
-
-    const handleEndDateChange = (date) => {
-        setEndDate(date);
+    const handleStartDateChange = (dateRange) => {
+        setStartDate(dateRange[0]);
+        setEndDate(dateRange[1]);
     };
 
     const handleEntityTypeChange = (e) => {
         setSelectedEntityType(e.target.value);
         setSelectedUserOrTeam(null); // Reset selected user or team when switching types
     };
+
+    const toggleFavorite = () => {
+        setIsFavorite(!isFavorite); // Toggle the favorite state
+    };
     
     return (
         <div className="graphs-page">
-            <div className="date-selection">
-                <div>
-                    <h3>Select Start Date</h3>
-                    <Calendar onChange={handleStartDateChange} value={startDate} />
-                </div>
-                <div>
-                    <h3>Select End Date</h3>
-                    <Calendar onChange={handleEndDateChange} value={endDate} />
+            <h2 className="page-title">Graphs</h2>
+            <div className="controls-container">
+                <div className="dropdowns-container">
+                    <div className="dropdown-group">
+                        <label>Select Data to View:</label>
+                        <select value={selectedGraph} onChange={(e) => setSelectedGraph(e.target.value)}>
+                            <option value="sentiment">Sentiment Score</option>
+                            <option value="green">Green</option>
+                            <option value="orange">Orange</option>
+                            <option value="red">Red</option>
+                            <option value="length">Snippet Length</option>
+                        </select>
+                    </div>
+                    {user.role === 'admin' && (
+                        <>
+                            <div className="dropdown-group">
+                                <label>Select Data Type:</label>
+                                <select value={selectedEntityType} onChange={handleEntityTypeChange}>
+                                    <option value="users">Users</option>
+                                    <option value="teams">Teams</option>
+                                </select>
+                            </div>
+                            <div className="dropdown-group">
+                                <label>Select {selectedEntityType === 'users' ? 'User' : 'Team'}:</label>
+                                <select 
+                                    value={selectedUserOrTeam ? selectedUserOrTeam.id : user.id} 
+                                    onChange={(e) => handleUserOrTeamSelection(e.target.value)}
+                                >
+                                    <option value={user.id}>Your Data</option>
+                                    {selectedEntityType === 'users' && users.map(user => (
+                                        <option key={user.id} value={user.id}>{user.email}</option>
+                                    ))}
+                                    {selectedEntityType === 'teams' && teams.map(team => (
+                                        <option key={team.id} value={team.id}>{team.team_name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    )}
+                    <div className="favorite-group">
+                        <button onClick={toggleFavorite} className="favorite-button">
+                            {isFavorite ? <FaStar size={24} /> : <FaRegStar size={24} />}
+                        </button>
+                        <button className="see-favorites-button">
+                            See Favorite Graphs
+                        </button>
+                    </div>
                 </div>
             </div>
-    
-            <div className="graph-selection">
-                <h3>Select Data to View</h3>
-                <select value={selectedGraph} onChange={(e) => setSelectedGraph(e.target.value)}>
-                    <option value="sentiment">Sentiment Score</option>
-                    <option value="green">Green</option>
-                    <option value="orange">Orange</option>
-                    <option value="red">Red</option>
-                    <option value="length">Snippet Length</option>
-                </select>
-    
-                {user.role === 'admin' && (
-                    <>
-                        <h3>Select Data Type</h3>
-                        <select value={selectedEntityType} onChange={handleEntityTypeChange}>
-                            <option value="users">Users</option>
-                            <option value="teams">Teams</option>
-                        </select>
-    
-                        <h3>Select {selectedEntityType === 'users' ? 'User' : 'Team'}</h3>
-                        <select 
-                            value={selectedUserOrTeam ? selectedUserOrTeam.id : user.id} 
-                            onChange={(e) => handleUserOrTeamSelection(e.target.value)}
-                        >
-                            <option value={user.id}>Your Data</option>
-                            {selectedEntityType === 'users' && users.map(user => (
-                                <option key={user.id} value={user.id}>{user.email}</option>
-                            ))}
-                            {selectedEntityType === 'teams' && teams.map(team => (
-                                <option key={team.id} value={team.id}>{team.team_name}</option>
-                            ))}
-                        </select>
-                    </>
-                )}
-            </div>
-    
-            <div className="chart-section">
-                <Line
-                    data={chartData}
-                    options={{
-                      responsive: true,
-                      plugins: {
-                          legend: {
-                              labels: {
-                                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-                              },
-                          },
-                      },
-                      scales: {
-                          x: {
-                              ticks: {
-                                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-                              },
-                          },
-                          y: {
-                              beginAtZero: true, // Ensure the y-axis starts at 0
-                              max: selectedGraph === 'sentiment' ? 10 : undefined, // Set max to 10 if sentiment is selected
-                              ticks: {
-                                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-                              },
-                          },
-                      },
-                    }}
-                    ref={chartRef}
-                />
+
+            <div className="chart-and-date-container">
+
+                <div className="date-range-picker">
+                    <Calendar
+                        selectRange={true} // Enable range selection
+                        onChange={handleStartDateChange}
+                        value={[startDate, endDate]}
+                    />
+                </div>
+
+                <div className="chart-section">
+                    <Line
+                        data={chartData}
+                        options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                                    },
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                                    },
+                                },
+                                y: {
+                                    beginAtZero: true, // Ensure the y-axis starts at 0
+                                    max: selectedGraph === 'sentiment' ? 10 : undefined, // Set max to 10 if sentiment is selected
+                                    ticks: {
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                                    },
+                                },
+                            },
+                        }}
+                        ref={chartRef}
+                        height={400}
+                        width={800}
+                    />
+                </div>
             </div>
         </div>
     );
-    
 };
 
 export default Graphs;
