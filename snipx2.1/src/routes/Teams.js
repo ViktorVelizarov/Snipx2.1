@@ -5,8 +5,8 @@ import { useAuth } from "../AuthProvider";
 function Teams() {
     const [teams, setTeams] = useState([]);
     const [newTeamName, setNewTeamName] = useState("");
-    const [newTeamMembers, setNewTeamMembers] = useState([]); // To store user IDs for new team members
-    const [users, setUsers] = useState([]); // To fetch all users for selecting team members
+    const [newTeamMembers, setNewTeamMembers] = useState([]);
+    const [users, setUsers] = useState([]);
     const [editingTeamId, setEditingTeamId] = useState(null);
     const [editingTeamName, setEditingTeamName] = useState("");
     const [editingTeamMembers, setEditingTeamMembers] = useState([]);
@@ -24,7 +24,15 @@ function Teams() {
             });
 
             const data = await response.json();
-            setTeams(data);
+            console.log('received teams:', data);
+            
+            // Ensure average_score is rounded to one decimal place
+            const formattedTeams = data.map(team => ({
+                ...team,
+                average_score: parseFloat(team.average_score.toFixed(1))
+            }));
+
+            setTeams(formattedTeams);
         } catch (error) {
             console.error("Error fetching teams:", error);
         }
@@ -68,7 +76,6 @@ function Teams() {
                 }),
             });
             if (response.ok) {
-                // Refresh the teams after creating a new team
                 await fetchTeams();
                 setNewTeamName("");
                 setNewTeamMembers([]);
@@ -174,6 +181,7 @@ function Teams() {
                             <th>ID</th>
                             <th>Team Name</th>
                             <th>Members</th>
+                            <th>Average Score</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -211,6 +219,7 @@ function Teams() {
                                         team.teamMembers.map(member => users.find(user => user.id === member.user_id)?.email || "Unknown").join(", ")
                                     )}
                                 </td>
+                                <td>{team.average_score.toFixed(1)}</td>
                                 <td>
                                     {editingTeamId === team.id ? (
                                         <>
