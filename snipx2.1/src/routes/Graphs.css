@@ -1,0 +1,52 @@
+.graphs-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: var(--bg-color);
+    color: var(--colored-text);
+    min-height: 100vh;
+}
+
+.admin-options {
+    margin-bottom: 20px;
+}
+
+.admin-options label {
+    margin-right: 10px;
+}
+
+.admin-options select {
+    margin-right: 20px;
+    padding: 5px;
+}
+
+.graph-options {
+    margin-bottom: 20px;
+}
+
+.graph-options label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.graph-container {
+    margin-top: 20px;
+}
+
+.date-selection {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.graph-selection {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.chart-section {
+    margin-top: 30px;
+    width: 100%;
+    max-width: 900px;
+}
