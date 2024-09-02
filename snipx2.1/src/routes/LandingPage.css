@@ -30,7 +30,10 @@
     align-items: center;
     justify-content: center;
     margin-right: 20px;
+    background-size: cover;         /* Make sure the image covers the entire div */
+    background-position: center;    /* Center the image */
   }
+  
   
   .profile-info {
     color: var(--colored-text);

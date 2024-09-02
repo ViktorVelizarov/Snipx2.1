@@ -20,6 +20,8 @@ const Home = ({ isDarkMode }) => {
   const [snippets, setSnippets] = useState([]); // Store all snippets
   const navigate = useNavigate(); // Get the navigate function
 
+  console.log("user in landing page:", user.profilePictureUrl)
+
   useEffect(() => {
     const fetchAllSnippets = async () => {
       try {
@@ -158,20 +160,29 @@ const Home = ({ isDarkMode }) => {
 
   return (
     <div className="landing-page">
-      <div className="profile-section">
-        <div className="profile-picture">Profile Picture (Scaleup)</div>
-        <div className="profile-info">
-          {user ? (
-            <>
-              <h2>Name: {user.email.substring(0, 3)}</h2>
-              <p>Email: {user.email}</p>
-              <p>Position: {user.role}</p>
-            </>
-          ) : (
-            <p>Loading user information...</p>
-          )}
-        </div>
+    <div className="profile-section">
+      <div
+        className="profile-picture"
+        style={{
+          backgroundImage: user?.profilePictureUrl ? `url(${user.profilePictureUrl})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {!user?.profilePictureUrl && 'Profile Picture'}
       </div>
+      <div className="profile-info">
+        {user ? (
+          <>
+            <h2>Name: {user.email.substring(0, 3)}</h2>
+            <p>Email: {user.email}</p>
+            <p>Position: {user.role}</p>
+          </>
+        ) : (
+          <p>Loading user information...</p>
+        )}
+      </div>
+    </div>
 
       <div className="overview-section">
         <h2>Weekly Overview</h2>
