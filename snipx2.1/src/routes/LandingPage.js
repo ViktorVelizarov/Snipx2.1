@@ -10,17 +10,19 @@ import axios from 'axios';
 const Home = ({ isDarkMode }) => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [averageScore, setAverageScore] = useState(7.4); // Initial average score
+  const [averageScore, setAverageScore] = useState(7.4);
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [],
   });
-  const [overviewData, setOverviewData] = useState([]); // Store overview data
-  const chartRef = useRef(null); // Reference to the chart instance
-  const [snippets, setSnippets] = useState([]); // Store all snippets
-  const navigate = useNavigate(); // Get the navigate function
+  const [overviewData, setOverviewData] = useState([]);
+  const chartRef = useRef(null);
+  const [snippets, setSnippets] = useState([]);
+  const navigate = useNavigate();
 
-  console.log("user in landing page:", user.profilePictureUrl)
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     const fetchAllSnippets = async () => {
@@ -28,7 +30,7 @@ const Home = ({ isDarkMode }) => {
         const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user", {
           id: user.id,
         });
-        setSnippets(response.data); // Store all snippets
+        setSnippets(response.data);
       } catch (error) {
         console.error("Error fetching snippets:", error);
       }
@@ -42,23 +44,23 @@ const Home = ({ isDarkMode }) => {
   useEffect(() => {
     const filteredSnippets = filterSnippetsBySelectedRange(selectedDate);
     updateChartData(filteredSnippets);
-  }, [selectedDate, snippets, isDarkMode]); // Re-run when selectedDate, snippets, or isDarkMode changes
+  }, [selectedDate, snippets, isDarkMode]);
 
   const chartOptions = {
     responsive: true,
     plugins: {
       legend: {
         labels: {
-          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set text color based on dark mode
+          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
         },
       },
       title: {
         display: true,
         text: 'Sentiment Scores Over Time',
-        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set title color
+        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
       },
       tooltip: {
-        bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set tooltip text color
+        bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
         titleColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
         backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
       },
@@ -66,15 +68,76 @@ const Home = ({ isDarkMode }) => {
     scales: {
       x: {
         ticks: {
-          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // X-axis labels color
+          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
         },
       },
       y: {
         ticks: {
-          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Y-axis labels color
+          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
         },
       },
     },
+  };
+
+  const handleProfilePictureClick = () => {
+    setIsPopupOpen(true);
+  };
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const handleSavePicture = async () => {
+    if (!imageFile) {
+      console.error("No image file selected.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('userId', user.id);
+    formData.append('profilePicture', imageFile);
+
+    try {
+      await axios.post("https://extension-360407.lm.r.appspot.com/api/uploadProfilePicture", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Update user profile picture URL (you may need to refetch the user data here)
+      const updatedUser = { ...user, profilePictureUrl: URL.createObjectURL(imageFile) };
+      // Assuming there's a function to update user context
+      // updateUserContext(updatedUser);
+
+      setIsPopupOpen(false);
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+    }
   };
 
   const updateChartData = (filteredSnippets) => {
@@ -95,8 +158,8 @@ const Home = ({ isDarkMode }) => {
     };
 
     setChartData(newChartData);
-    calculateAverageScore(scores); // Calculate average score
-    updateOverviewData(sortedSnippets); // Update overview data
+    calculateAverageScore(scores);
+    updateOverviewData(sortedSnippets);
 
     if (chartRef.current) {
       chartRef.current.update();
@@ -136,7 +199,7 @@ const Home = ({ isDarkMode }) => {
   const calculateAverageScore = (scores) => {
     const total = scores.reduce((sum, score) => sum + parseFloat(score), 0);
     const average = total / scores.length || 0;
-    setAverageScore(average.toFixed(2)); // Set average score to two decimal places
+    setAverageScore(average.toFixed(2));
   };
 
   const updateOverviewData = (filteredSnippets) => {
@@ -160,29 +223,59 @@ const Home = ({ isDarkMode }) => {
 
   return (
     <div className="landing-page">
-    <div className="profile-section">
-      <div
-        className="profile-picture"
-        style={{
-          backgroundImage: user?.profilePictureUrl ? `url(${user.profilePictureUrl})` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        {!user?.profilePictureUrl && 'Profile Picture'}
+      <div className="profile-section">
+        <div
+          className="profile-picture"
+          style={{
+            backgroundImage: user?.profilePictureUrl ? `url(data:image/png;base64,${user.profilePictureUrl})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            cursor: 'pointer',
+          }}
+          onClick={handleProfilePictureClick}
+        >
+          {!user?.profilePictureUrl && 'Profile Picture'}
+        </div>
+        <div className="profile-info">
+          {user ? (
+            <>
+              <h2>Name: {user.email.substring(0, 3)}</h2>
+              <p>Email: {user.email}</p>
+              <p>Position: {user.role}</p>
+            </>
+          ) : (
+            <p>Loading user information...</p>
+          )}
+        </div>
       </div>
-      <div className="profile-info">
-        {user ? (
-          <>
-            <h2>Name: {user.email.substring(0, 3)}</h2>
-            <p>Email: {user.email}</p>
-            <p>Position: {user.role}</p>
-          </>
-        ) : (
-          <p>Loading user information...</p>
-        )}
-      </div>
-    </div>
+
+      {isPopupOpen && (
+        <div className="upload-popup">
+          <div className="upload-popup-content">
+            <h2>Upload New Profile Picture</h2>
+            <div
+              className="upload-area"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+            >
+              {selectedImage ? (
+                <img src={selectedImage} alt="Selected" className="preview-image" />
+              ) : (
+                <p>Drag and drop an image here or click to select</p>
+              )}
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+              id="file-upload"
+            />
+            <button onClick={handleSavePicture}>Save</button>
+            <button onClick={() => setIsPopupOpen(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       <div className="overview-section">
         <h2>Weekly Overview</h2>
@@ -210,14 +303,15 @@ const Home = ({ isDarkMode }) => {
         </div>
       </div>
 
-      <div  onClick={handleChartClick} style={{ cursor: 'pointer' }} className="analysis-section">
+      <div onClick={handleChartClick} style={{ cursor: 'pointer' }} className="analysis-section">
         <h2>Sentiment Analysis</h2>
-            <Line className="sentiment-analysis-graph" 
-              data={chartData}
-              options={chartOptions} // Add the options here
-              ref={chartRef}
-              onClick={handleChartClick} // Handle chart clicks 
-            />
+        <Line
+          className="sentiment-analysis-graph"
+          data={chartData}
+          options={chartOptions}
+          ref={chartRef}
+          onClick={handleChartClick}
+        />
         <div className="average-score">
           <div className="circle">{averageScore}</div>
         </div>
@@ -225,17 +319,9 @@ const Home = ({ isDarkMode }) => {
 
       <div className="calendar-section">
         <Calendar onChange={handleDateChange} value={selectedDate} />
-        {/* <div className="calendar-controls">
-          <button>Green</button>
-          <button>Yellow</button>
-          <button>Red</button>
-          <button>Week</button>
-          <button>Month</button>
-        </div> */}
       </div>
     </div>
   );
-
 };
 
 export default Home;
