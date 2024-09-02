@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -7,8 +7,9 @@ import './LandingPage.css';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
 
-const Home = ({ isDarkMode }) => {
+const Home = () => {
   const { user } = useAuth();
+  const { isDarkMode } = useOutletContext();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [averageScore, setAverageScore] = useState(7.4);
   const [chartData, setChartData] = useState({
@@ -44,7 +45,19 @@ const Home = ({ isDarkMode }) => {
   useEffect(() => {
     const filteredSnippets = filterSnippetsBySelectedRange(selectedDate);
     updateChartData(filteredSnippets);
+
+    if (chartRef.current) {
+      chartRef.current.update(); // Force update on chart when dark mode changes
+    }
   }, [selectedDate, snippets, isDarkMode]);
+
+/*
+  useEffect(() => {
+    if (chartRef.current) {
+      chartRef.current.update();
+    }
+  }, [isDarkMode]);  
+*/
 
   const chartOptions = {
     responsive: true,

@@ -3,31 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useAuth } from "../AuthProvider";
 import { Link, Outlet } from 'react-router-dom';
-import { FaHome, FaPlusSquare, FaClipboardList, FaUsers, FaSignOutAlt, FaChartBar, FaRegCircle, FaCircle, FaCalendarPlus, FaAngleDoubleLeft , FaAngleDoubleRight, FaSignInAlt } from 'react-icons/fa'; // Import icons
+import { FaHome, FaPlusSquare, FaClipboardList, FaUsers, FaSignOutAlt, FaChartBar, FaRegCircle, FaCircle, FaCalendarPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaSignInAlt } from 'react-icons/fa';
 import './style.css';
-
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Box from "@mui/material/Box";
-import GoogleIcon from "@mui/icons-material/Google";
-import Button from "@mui/material/Button";
 
 import SnipXWhiteImage from './images/SNIPX-Logo-White.png';
 import SnipXGradientImage from './images/SNIPX-Logo-Gradient.png';
 
 const NavBar = () => {
-    const { user, logout, login, auth, checkDatabase} = useAuth();
+    const { user, logout, login, auth, checkDatabase } = useAuth();
     const [isDarkMode, setIsDarkMode] = useState(true);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Sidebar toggle state
-    const [snipXImage, setSnipXImage] = useState(SnipXWhiteImage); // State for image
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [snipXImage, setSnipXImage] = useState(SnipXWhiteImage);
     const [firebaseUser, loading] = useAuthState(auth);
     const navigate = useNavigate();
 
     useEffect(() => {
         if (user?.email) {
-        return navigate("/home");
+            return navigate("/home");
         } else if (!loading && firebaseUser) {
-        checkDatabase(firebaseUser);
+            checkDatabase(firebaseUser);
         }
     }, [user, loading, firebaseUser, navigate, checkDatabase]);
 
@@ -49,7 +43,7 @@ const NavBar = () => {
             document.documentElement.style.setProperty('--colored-text', 'white');
             document.documentElement.style.setProperty('--black-text', 'white');
             document.documentElement.style.setProperty('--pagination-disabled', 'rgb(100,100,100)');
-            setSnipXImage(SnipXGradientImage); // Set image for dark mode
+            setSnipXImage(SnipXGradientImage);
         } else {
             document.documentElement.style.setProperty('--navbar-color', '#8C4EA0');
             document.documentElement.style.setProperty('--navbar-color2', '#E4277D');
@@ -62,7 +56,7 @@ const NavBar = () => {
             document.documentElement.style.setProperty('--colored-text', '#8C4EA0');
             document.documentElement.style.setProperty('--black-text', 'black');
             document.documentElement.style.setProperty('--pagination-disabled', '#ccc');
-            setSnipXImage(SnipXWhiteImage); // Set image for light mode
+            setSnipXImage(SnipXWhiteImage);
         }
         setIsDarkMode(!isDarkMode);
     };
@@ -119,20 +113,21 @@ const NavBar = () => {
                         </li>
                     )}
                     <li>
-                                <Link to="#" onClick={(e) => {
-                                    e.preventDefault();
-                                    toggleColors();
-                                }}>
-                                    {isDarkMode ? <><FaRegCircle /> Switch Dark Mode</> : <><FaCircle /> Switch Scaleup Mode</>}
-                                </Link>
-                            </li>
+                        <Link to="#" onClick={(e) => {
+                            e.preventDefault();
+                            toggleColors();
+                        }}>
+                            {isDarkMode ? <><FaRegCircle /> Switch Dark Mode</> : <><FaCircle /> Switch Scaleup Mode</>}
+                        </Link>
+                    </li>
                 </ul>
             </nav>
             <div className="toggle-btn" onClick={toggleSidebar}>
-                {isSidebarOpen ? <FaAngleDoubleLeft  /> : <FaAngleDoubleRight />}
+                {isSidebarOpen ? <FaAngleDoubleLeft /> : <FaAngleDoubleRight />}
             </div>
             <div className={`content ${isSidebarOpen ? '' : 'shifted'}`}>
-                <Outlet />
+                {/* Provide the context to the Outlet here */}
+                <Outlet context={{ isDarkMode, toggleColors }} />
             </div>
         </>
     );

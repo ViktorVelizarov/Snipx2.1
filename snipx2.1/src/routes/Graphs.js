@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import './Graphs.css';
-import { FaRegStar, FaStar } from 'react-icons/fa'; // Import star icons
+import { FaRegStar, FaStar } from 'react-icons/fa';
 
 const Graphs = () => {
     const { user } = useAuth();
+    const { isDarkMode } = useOutletContext(); // Get isDarkMode from the context
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
     const [selectedGraph, setSelectedGraph] = useState('sentiment');
@@ -18,10 +19,10 @@ const Graphs = () => {
     const chartRef = useRef(null);
     const [users, setUsers] = useState([]);
     const [teams, setTeams] = useState([]);
-    const [selectedUserOrTeam, setSelectedUserOrTeam] = useState(user); // Default to the current user
-    const [selectedEntityType, setSelectedEntityType] = useState('users'); // Default to 'users'
-    const [isFavorite, setIsFavorite] = useState(false); // State for toggling favorite
-    const navigate = useNavigate(); // Get the navigate function
+    const [selectedUserOrTeam, setSelectedUserOrTeam] = useState(user);
+    const [selectedEntityType, setSelectedEntityType] = useState('users');
+    const [isFavorite, setIsFavorite] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchUsers();
@@ -29,12 +30,12 @@ const Graphs = () => {
     }, [user]);
 
     useEffect(() => {
-        fetchSnippets(); // Fetch snippets when the selected user or team changes
+        fetchSnippets();
     }, [selectedUserOrTeam]);
 
     useEffect(() => {
-        updateChartData(); // Update chart data whenever snippets, selected graph, or date range changes
-    }, [startDate, endDate, selectedGraph, snippets]);
+        updateChartData();
+    }, [startDate, endDate, selectedGraph, snippets, isDarkMode]);
 
     const fetchUsers = async () => {
         try {
@@ -72,7 +73,7 @@ const Graphs = () => {
                 id: selectedUserOrTeam.id,
             });
 
-            setSnippets(response.data); // Store the fetched snippets
+            setSnippets(response.data);
         } catch (error) {
             console.error("Error fetching snippets:", error);
         }
@@ -120,22 +121,22 @@ const Graphs = () => {
     };
 
     const handleUserOrTeamSelection = (selectedId) => {
-      if (selectedId === user.id.toString()) {
-          setSelectedUserOrTeam(user); // Reset to the current user
-      } else {
-          const foundUser = users.find(u => u.id === parseInt(selectedId, 10));
-          const foundTeam = teams.find(t => t.id === parseInt(selectedId, 10));
-  
-          if (foundUser) {
-              setSelectedUserOrTeam(foundUser);
-          } else if (foundTeam) {
-              setSelectedUserOrTeam(foundTeam);
-          } else {
-              console.error("Selected user or team not found");
-          }
-      }
-  };
-  
+        if (selectedId === user.id.toString()) {
+            setSelectedUserOrTeam(user); // Reset to the current user
+        } else {
+            const foundUser = users.find(u => u.id === parseInt(selectedId, 10));
+            const foundTeam = teams.find(t => t.id === parseInt(selectedId, 10));
+
+            if (foundUser) {
+                setSelectedUserOrTeam(foundUser);
+            } else if (foundTeam) {
+                setSelectedUserOrTeam(foundTeam);
+            } else {
+                console.error("Selected user or team not found");
+            }
+        }
+    };
+
     const handleStartDateChange = (dateRange) => {
         setStartDate(dateRange[0]);
         setEndDate(dateRange[1]);
@@ -143,17 +144,17 @@ const Graphs = () => {
 
     const handleEntityTypeChange = (e) => {
         setSelectedEntityType(e.target.value);
-        setSelectedUserOrTeam(null); // Reset selected user or team when switching types
+        setSelectedUserOrTeam(null);
     };
 
     const toggleFavorite = () => {
-        setIsFavorite(!isFavorite); // Toggle the favorite state
+        setIsFavorite(!isFavorite);
     };
 
     const GoToFavoriteGraphs = () => {
         navigate('/favorite-graphs');
-      };
-    
+    };
+
     return (
         <div className="graphs-page">
             <h2 className="page-title">Graphs</h2>
@@ -207,10 +208,9 @@ const Graphs = () => {
             </div>
 
             <div className="chart-and-date-container">
-
                 <div className="date-range-picker">
                     <Calendar
-                        selectRange={true} // Enable range selection
+                        selectRange={true}
                         onChange={handleStartDateChange}
                         value={[startDate, endDate]}
                     />
@@ -236,8 +236,8 @@ const Graphs = () => {
                                     },
                                 },
                                 y: {
-                                    beginAtZero: true, // Ensure the y-axis starts at 0
-                                    max: selectedGraph === 'sentiment' ? 10 : undefined, // Set max to 10 if sentiment is selected
+                                    beginAtZero: true,
+                                    max: selectedGraph === 'sentiment' ? 10 : undefined,
                                     ticks: {
                                         color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
                                     },

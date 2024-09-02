@@ -7,9 +7,43 @@
     --colored-text: white; /* Assuming you want to use the same black text color as before */
 }
 
-/* Remove container and align everything to the left */
+/* Container for the chart to ensure it is centered */
+.chart-wrapper {
+    display: flex;
+    justify-content: center; /* Center the chart horizontally */
+    align-items: center; /* Center the chart vertically */
+    width: 100%; /* Full width of the container */
+    margin-bottom: 20px; /* Space below the chart */
+}
+
+/* Ensuring the chart takes a good portion of the width while being centered */
+.chart-wrapper canvas {
+    max-width: 800px; /* Max width for the chart */
+    width: 100%; /* Full width */
+}
+
+/* Page design */
 .weekly-report-container {
     width: 90%; /* Make sure the container takes up the full width */
+    margin: 40px auto;
+    padding: 20px; /* Add padding for some spacing inside */
+    background-color: var(--bg-color); /* Background color for the container */
+}
+
+/* Title styling */
+.weekly-report-title {
+    font-size: 36px;
+    color: var(--colored-text); /* Set title color */
+    text-align: center; /* Center the title */
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+
+/* Remove container and align everything to the left */
+.weekly-report-container {
+    width: 90%; 
     margin: 40px auto;
     margin-left: 40px;
     margin-right: 40px;
@@ -17,8 +51,8 @@
 
 .weekly-report-title {
     font-size: 36px;
-    color: var(--colored-text); /* Set title color to black */
-    text-align: left; /* Align text to the left */
+    color: var(--colored-text); 
+    text-align: left;
     margin-bottom: 20px;
     padding-bottom: 10px;
     border-bottom: 2px solid rgba(255, 255, 255, 0.3);
@@ -27,28 +61,38 @@
 .weekly-report-form {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align items to the left */
-    width: 100%; /* Full width */
-    max-width: none; /* Remove max width */
+    align-items: flex-start;
+    width: 100%; 
+    max-width: none;
     margin: 20px 0;
 }
 
-.weekly-report-enriched-text{
+.weekly-report-enriched-text {
     background-color: rgba(255, 255, 255, 0.8);
-    text-align: left; /* Align text to the left */
+    text-align: left;
     border-radius: 20px;
     border: 1px solid rgba(0, 0, 0, 0.6);
     height: 350px;
+    margin-bottom: 20px;
+    overflow: hidden; /* Ensure content does not overflow */
 }
 
-/* Style for the ReactQuill container */
 .weekly-report-enriched-text .ql-container {
+    height: 100%; /* Make the editor take the full height of the container */
+    overflow-y: auto; /* Enable vertical scrolling within the container */
     border: none; /* Remove the border */
 }
-.weekly-report-enriched-text .ql-toolbar {
-    border: none; /* Remove border from the toolbar */
+
+.weekly-report-enriched-text .ql-editor {
+    height: 100%; /* Ensure the editor content takes up the full height */
+    overflow-y: auto; /* Allow scrolling within the editor if the content exceeds the height */
+    box-sizing: border-box; /* Make sure padding and borders are included in height calculations */
 }
 
+.weekly-report-enriched-text .ql-toolbar {
+    border: none; 
+    border-radius: 20px 20px 0 0; /* Round the top corners of the toolbar */
+}
 
 .color-changing-text{
     color:var(--colored-text);

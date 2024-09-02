@@ -202,45 +202,46 @@ function WeeklyReports() {
             )}
 
             {chartData.labels.length > 0 && (
-                <div className="w-full max-w-md mt-8">
+                <div className="chart-wrapper">
                     <Bar
                         data={chartData}
-                        options = {{
+                        options={{
                             responsive: true,
                             plugins: {
-                              legend: {
-                                labels: {
-                                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set text color based on dark mode
+                                legend: {
+                                    labels: {
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set text color based on dark mode
+                                    },
                                 },
-                              },
-                              title: {
-                                display: true,
-                                text: 'Sentiment Scores Over Time',
-                                color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set title color
-                              },
-                              tooltip: {
-                                bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set tooltip text color
-                                titleColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-                                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-                              },
+                                title: {
+                                    display: true,
+                                    text: 'Sentiment Scores Over Time',
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set title color
+                                },
+                                tooltip: {
+                                    bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set tooltip text color
+                                    titleColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                                },
                             },
                             scales: {
                                 x: {
                                     ticks: {
-                                      color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // X-axis labels color
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // X-axis labels color
                                     },
-                                  },
-                                  y: {
+                                },
+                                y: {
                                     ticks: {
-                                      color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Y-axis labels color
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Y-axis labels color
                                     },
                                     beginAtZero: true,
-                                  },
+                                },
                             },
                         }}
                     />
                 </div>
             )}
+
 
             <h1 className="weekly-report-title">Weekly Report:</h1>
             <Suspense fallback={<div>Loading editor...</div>}>
@@ -249,13 +250,18 @@ function WeeklyReports() {
                     onChange={setWeeklyReport}
                     placeholder="Weekly report"
                     className="weekly-report-enriched-text"
+                    tabIndex={-1} // Prevents auto-focus
                 />
             </Suspense>
 
-            <button onClick={handleAnalyzeSubmit} className="mt-4 p-2 bg-yellow-500 text-white rounded">
-                {loading ? "Analyzing..." : "Analyze Report"} {/* Displaying loading text */}
-
+            <button 
+                onClick={handleAnalyzeSubmit} 
+                className="analyze-button"
+                tabIndex="0" // Ensure the button is focusable and clickable
+            >
+                {loading ? "Analyzing..." : "Analyze Report"}
             </button>
+
 
             <div className="flex flex-col items-center w-full max-w-lg mt-8 space-y-4">
                 {/* Fields for results */}

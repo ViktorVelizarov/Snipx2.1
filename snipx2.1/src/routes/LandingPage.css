@@ -70,7 +70,7 @@
     text-align: left;
   }
   .highlighted-row {
-  background-color: rgba(228, 39, 125, 0.3); /* Special color for the selected day */
+    background-color: rgba(228, 39, 125, 0.3); /* Special color for the selected day */
   }
 
   .analysis-section {
@@ -170,7 +170,7 @@
     color: white; 
 }
 .react-calendar__tile--hover {
-    background: rgba(228, 39, 125, 0.1); /* Slight hover effect */
+    background: #8C4EA0; /* Slight hover effect */
 }
 
 /* Adjust the text color and hover for better contrast */
@@ -227,20 +227,7 @@ button {
   padding: 10px 20px;
   margin: 10px;
   border: none;
-  background-color: #228B22;
   color: white;
   border-radius: 5px;
   cursor: pointer;
-}
-
-button:hover {
-  background-color: #1e7c1e;
-}
-
-button + button {
-  background-color: #ff4d4d;
-}
-
-button + button:hover {
-  background-color: #cc0000;
 }
