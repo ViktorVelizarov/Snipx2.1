@@ -274,6 +274,7 @@
     }
   }
 
+
 /* Style adjustments for Team section */
 /* Wrapper to center the team section */
 .center-wrapper {
@@ -281,14 +282,15 @@
   justify-content: center;
   align-items: center;
   width: 100%;
+  overflow-x: auto; /* Enable horizontal scrolling */
 }
 
 /* Ensure that the team section is centered */
 .team {
   width: 100%;
-  max-width: 1200px; /* You can adjust this max-width based on your design */
   text-align: center;
   background-color: transparent;
+  padding: 0 20px; /* Add padding for better content visibility */
 }
 
 .team h2 {
@@ -300,18 +302,19 @@
 }
 
 /* Updated Team Members and Descriptions Layout */
-.team-members,
-.team-descriptions {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+.team-members {
+  display: flex;
+  justify-content: center;
   gap: 20px;
-  justify-items: center;
-  align-items: start;
-  margin-bottom: 20px;
+  width: 100%;
+  white-space: nowrap; /* Prevent wrapping */
+  position: relative;
 }
 
 .team-member {
   text-align: center;
+  min-width: 150px; /* Ensure all items have a minimum width */
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .team-member img {
@@ -336,50 +339,55 @@
   margin: 0;
 }
 
-.team-descriptions ul {
+.team-member ul {
   list-style-type: disc;
-  text-align: center;
+  text-align: left;
   color: rgba(255, 255, 255, 0.9);
+  max-width: 150px; /* Limit the maximum width of each list */
+  margin: 10px auto 0; /* Center the list within its container */
+  white-space: normal; /* Ensure text wraps properly */
 }
 
-.team-descriptions ul li {
+.team-member ul li {
   margin-bottom: 10px;
+  word-wrap: break-word;
 }
 
 /* Media Queries for Responsive Design */
 @media (max-width: 768px) {
-  .team-members,
-  .team-descriptions {
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 15px;
+  .team-member {
+    min-width: 120px;
+  }
+
+  .team-member ul {
+    max-width: 120px;
   }
 }
 
 @media (max-width: 480px) {
-  .team-members,
-  .team-descriptions {
-      grid-template-columns: 1fr;
-      gap: 10px;
+  .team-member {
+    min-width: 100px;
   }
 
   .team-member img {
-      width: 100px;
-      height: 100px;
+    width: 100px;
+    height: 100px;
   }
 
   .team-member h3 {
-      font-size: 18px;
+    font-size: 18px;
   }
 
-  .team-member p {
-      font-size: 14px;
+  .team-member p, 
+  .team-member ul {
+    font-size: 14px;
   }
 
-  .team-descriptions ul {
-      text-align: left;
+  .team-member ul {
+    max-width: 100%;
+    text-align: left;
   }
 }
-
 
 
 /* Style adjustments for Landscape section */

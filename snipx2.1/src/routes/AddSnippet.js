@@ -6,6 +6,9 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { useAuth } from "../AuthProvider";
 import { useNavigate } from 'react-router-dom';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFlag } from '@fortawesome/free-solid-svg-icons';
+
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -51,7 +54,6 @@ const Snippets = () => {
                 body: JSON.stringify({ text: inputText }),
             });
             const data1 = await response1.json();
-            console.log("data from first API", data1);
 
             const response2 = await fetch(`https://extension-360407.lm.r.appspot.com/api/sentimentAnalysis`, {
                 method: "POST",
@@ -61,7 +63,6 @@ const Snippets = () => {
                 body: JSON.stringify({ text: inputText }),
             });
             const data2 = await response2.json();
-            console.log("data from sentimentAnalysis API", data2);
 
             const cleanedExplanations = data2.explanations ? data2.explanations.replace(/<\/?[^>]+(>|$)/g, "") : "";
 
@@ -121,9 +122,7 @@ const Snippets = () => {
             }
     
             const result = await response.json();
-            console.log("API response:", result);
     
-            // Show an alert when the response is received
             window.alert("Data has been successfully approved!");
     
             if (currentScore !== "" && currentDate !== "") {
@@ -131,7 +130,6 @@ const Snippets = () => {
                 setDates([...dates, currentDate]);
             }
     
-            // Reset all fields after approving
             setInputText("");  // Reset inputText
             setResults({ green: [], orange: [], red: [], explanations: "", score: "", sentiment: "" });
             setCurrentScore("");
@@ -145,7 +143,6 @@ const Snippets = () => {
             setLoading(false); // Stop loading
         }
     };
-    
 
     const data = {
         labels: dates,
@@ -166,16 +163,16 @@ const Snippets = () => {
         plugins: {
           legend: {
             labels: {
-              color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set text color based on dark mode
+              color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
             },
           },
           title: {
             display: true,
             text: 'Sentiment Scores Over Time',
-            color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set title color
+            color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
           },
           tooltip: {
-            bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Set tooltip text color
+            bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
             titleColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
             backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
           },
@@ -183,27 +180,23 @@ const Snippets = () => {
         scales: {
             x: {
                 ticks: {
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // X-axis labels color
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
                 },
               },
               y: {
                 ticks: {
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(), // Y-axis labels color
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
                 },
                 beginAtZero: true,
               },
         },
     };
 
-    function autoResizeTextarea(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-
     useEffect(() => {
         const textareas = document.querySelectorAll('.auto-resize');
         textareas.forEach((textarea) => {
-            autoResizeTextarea(textarea);
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
         });
     }, [results]);
 
@@ -246,7 +239,10 @@ const Snippets = () => {
             <div className="flex flex-col items-center w-full max-w-lg mt-8 space-y-4">
                 {showOutputs && results.green.length > 0 && (
                     <div className="w-full">
-                        <h2 className="green-title mb-2">Green</h2>
+                        <h2 className="green-title mb-2">
+                            <FontAwesomeIcon icon={faFlag} style={{ color: 'green', marginRight: '8px' }} />
+                            Green
+                        </h2>
                         {results.green.map((item, index) => (
                             <textarea
                                 key={`green-${index}`}
@@ -263,7 +259,10 @@ const Snippets = () => {
     
                 {showOutputs && results.orange.length > 0 && (
                     <div className="w-full">
-                        <h2 className="orange-title mb-2">Orange</h2>
+                        <h2 className="orange-title mb-2">
+                            <FontAwesomeIcon icon={faFlag} style={{ color: 'orange', marginRight: '8px' }} />
+                            Orange
+                        </h2>
                         {results.orange.map((item, index) => (
                             <textarea
                                 key={`orange-${index}`}
@@ -280,7 +279,10 @@ const Snippets = () => {
     
                 {showOutputs && results.red.length > 0 && (
                     <div className="w-full">
-                        <h2 className="red-title mb-2">Red</h2>
+                        <h2 className="red-title mb-2">
+                            <FontAwesomeIcon icon={faFlag} style={{ color: 'red', marginRight: '8px' }} />
+                            Red
+                        </h2>
                         {results.red.map((item, index) => (
                             <textarea
                                 key={`red-${index}`}
@@ -298,9 +300,7 @@ const Snippets = () => {
                 {showOutputs && (
                     <>
                         <div className="w-full">
-
                             <h2 className="explanation-score-sentiment-title">Explanations</h2>
-
                             <textarea
                                 value={results.explanations}
                                 className="auto-resize mb-2"

@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from "react";
 import { useAuth } from "../AuthProvider";
 import axios from "axios";
 import { FaAngleDoubleLeft, FaAngleDoubleRight, FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import './MySnippets.css';
 
 function MySnippets() {
@@ -142,9 +144,9 @@ function MySnippets() {
               <th>Type</th>
               <th>Date</th>
               <th>Snippet Text</th>
-              <th>Green</th>
-              <th>Orange</th>
-              <th>Red</th>
+              <th><FontAwesomeIcon icon={faFlag} style={{ color: 'green'}} /></th>
+              <th><FontAwesomeIcon icon={faFlag} style={{ color: 'orange'}} /></th>
+              <th><FontAwesomeIcon icon={faFlag} style={{ color: 'red'}} /></th>
               <th>Explanations</th>
               <th>Actions</th>
             </tr>

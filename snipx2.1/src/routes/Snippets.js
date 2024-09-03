@@ -1,5 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { FaAngleDoubleLeft, FaAngleDoubleRight, FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import './Snippets.css';
 
 function Snippets() {
@@ -161,9 +163,9 @@ function Snippets() {
             <th className="py-3 px-4 text-left font-bold text-gray-800">Type</th>
             <th className="py-3 px-4 text-left font-bold text-gray-800">Date</th>
             <th className="py-3 px-4 text-left font-bold text-gray-800">Snippet Text</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Green</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Orange</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Red</th>
+            <th><FontAwesomeIcon icon={faFlag} style={{ color: 'green'}} /></th>
+            <th><FontAwesomeIcon icon={faFlag} style={{ color: 'orange'}} /></th>
+            <th><FontAwesomeIcon icon={faFlag} style={{ color: 'red'}} /></th>
             <th className="py-3 px-4 text-left font-bold text-gray-800">Explanations</th>
             <th className="py-3 px-4 text-left font-bold text-gray-800">Score</th>
             <th className="py-3 px-4 text-left font-bold text-gray-800">Sentiment</th>

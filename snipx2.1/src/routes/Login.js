@@ -209,71 +209,69 @@ const Login = () => {
               <img src={marekImage} alt="Marek" />
               <h3>Marek</h3>
               <p>CEO</p>
+              <ul>
+                <li>Lived and worked in 10 countries</li>
+                <li>Fluent in 6 languages</li>
+                <li>7+ years at Google</li>
+              </ul>
             </div>
             <div className="team-member">
               <img src={martinSImage} alt="Martin" />
               <h3>Martin</h3>
               <p>COO</p>
+              <ul>
+                <li>20+ years experience in technology projects</li>
+                <li>10+ years PM Experience</li>
+              </ul>
             </div>
             <div className="team-member">
               <img src={piotrImage} alt="Piotr" />
               <h3>Piotr</h3>
               <p>Senior Fellow</p>
+              <ul>
+                <li>Previously Head of Marketing at eBay</li>
+                <li>Scaleup.Agency Partner (5+ years)</li>
+              </ul>
             </div>
             <div className="team-member">
               <img src={kristinaImage} alt="Kristina" />
               <h3>Kristina</h3>
               <p>Team Lead</p>
+              <ul>
+                <li>4+ years of experience as a Team Lead at SCALEUP</li>
+              </ul>
             </div>
             <div className="team-member">
               <img src={martinEImage} alt="Martin" />
               <h3>Martin</h3>
               <p>Team Lead</p>
+              <ul>
+                <li>4+ years of experience as a Team Lead and PM</li>
+              </ul>
             </div>
             <div className="team-member">
               <img src={sancheImage} alt="Sanche" />
               <h3>Sanche</h3>
               <p>UI Designer</p>
+              <ul>
+                <li>Very good looking man</li>
+              </ul>
             </div>
             <div className="team-member">
               <img src={viktorImage} alt="Viktor" />
               <h3>Viktor</h3>
               <p>UX Programmer</p>
+              <ul>
+                <li>Litteraly Batman</li>
+              </ul>
             </div>
-          </div>
-          <div className="team-descriptions">
-            <ul>
-              <li>Lived and worked in 10 countries</li>
-              <li>Fluent in 6 languages</li>
-              <li>7+ years at Google</li>
-            </ul>
-            <ul>
-              <li>20+ years experience in technology projects</li>
-              <li>10+ years PM Experience</li>
-            </ul>
-            <ul>
-              <li>Previously Head of Marketing at eBay</li>
-              <li>Scaleup.Agency Partner (5+ years)</li>
-            </ul>
-            <ul>
-              <li>4+ years of experience as a Team Lead at SCALEUP</li>
-            </ul>
-            <ul>
-              <li>4+ years of experience as a Team Lead and PM</li>
-            </ul>
-            <ul>
-              <li>Very good looking man</li>
-            </ul>
-            <ul>
-              <li>Litteraly Batman</li>
-            </ul>
           </div>
         </div>
       </div>
-      
 
-      </div>
-      </div>
+
+    </div>
+  </div>
   );
 };
 
