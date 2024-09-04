@@ -73,10 +73,10 @@ const FavoriteGraphs = () => {
 
     const fetchSnippets = async () => {
         try {
-            const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/snipx_snippets/team", {
-                teamId: selectedTeam.id,
+            const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/team_snippets", {
+                teamIdReq: selectedTeam.id,
             });
-
+            console.log("snippets:", response.data)
             setSnippets(response.data);
         } catch (error) {
             console.error("Error fetching snippets:", error);
