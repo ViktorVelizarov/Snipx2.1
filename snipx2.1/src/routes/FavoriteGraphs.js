@@ -23,7 +23,7 @@ import {
 ChartJS.register(
     CategoryScale,
     LinearScale,
-    RadialLinearScale,  // Ensure this is registered
+    RadialLinearScale,  
     PointElement,
     LineElement,
     BarElement,
@@ -34,29 +34,31 @@ ChartJS.register(
 
 const FavoriteGraphs = () => {
     const { user } = useAuth();
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
-    const [selectedTeam, setSelectedTeam] = useState(null);
     const [teams, setTeams] = useState([]);
-    const [snippets, setSnippets] = useState([]);
-    const [trendsData, setTrendsData] = useState({ labels: [], datasets: [] });
-    const [dayStatsData, setDayStatsData] = useState({ labels: [], datasets: [] });
-    const [criticalPanthersData, setCriticalPanthersData] = useState({ labels: [], datasets: [] });
-    const chartRef = useRef(null);
+    const [snippets, setSnippets] = useState([[], [], []]); // Initialize snippets as an array of arrays
+    const [chartRefs, setChartRefs] = useState([useRef(null), useRef(null), useRef(null)]); // Array of refs for charts
+
+    // For each graph's team and timing
+    const [selectedTeams, setSelectedTeams] = useState([null, null, null]);
+    const [timePeriods, setTimePeriods] = useState(['Last week', 'Last week', 'Last week']);
+    const [calendarVisible, setCalendarVisible] = useState([false, false, false]);
+    const [dateRanges, setDateRanges] = useState([
+        { start: new Date(), end: new Date() },
+        { start: new Date(), end: new Date() },
+        { start: new Date(), end: new Date() }
+    ]);
 
     useEffect(() => {
         fetchTeams();
     }, [user]);
 
     useEffect(() => {
-        if (selectedTeam) {
-            fetchSnippets();
-        }
-    }, [selectedTeam]);
-
-    useEffect(() => {
-        updateChartData();
-    }, [startDate, endDate, snippets]);
+        selectedTeams.forEach((team, index) => {
+            if (team) {
+                fetchSnippets(team.id, index);
+            }
+        });
+    }, [selectedTeams, timePeriods]);
 
     const fetchTeams = async () => {
         try {
@@ -71,133 +73,173 @@ const FavoriteGraphs = () => {
         }
     };
 
-    const fetchSnippets = async () => {
+    const fetchSnippets = async (teamId, index) => {
         try {
             const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/team_snippets", {
-                teamIdReq: selectedTeam.id,
+                teamIdReq: teamId,
             });
-            console.log("snippets:", response.data)
-            setSnippets(response.data);
+            setSnippets(prev => {
+                const newSnippets = [...prev];
+                newSnippets[index] = response.data;
+                return newSnippets;
+            });
         } catch (error) {
             console.error("Error fetching snippets:", error);
         }
     };
 
-    const updateChartData = () => {
-        const filteredSnippets = snippets.filter(snippet => {
-            const snippetDate = new Date(snippet.date);
-            return snippetDate >= startDate && snippetDate <= endDate;
+    const handleTimePeriodChange = (index, value) => {
+        const updatedTimePeriods = [...timePeriods];
+        updatedTimePeriods[index] = value;
+        setTimePeriods(updatedTimePeriods);
+        if (value === "Calendar") {
+            toggleCalendarVisibility(index, true);
+        } else {
+            toggleCalendarVisibility(index, false);
+        }
+    };
+
+    const toggleCalendarVisibility = (index, visible) => {
+        setCalendarVisible(prev => {
+            const updatedVisibility = [...prev];
+            updatedVisibility[index] = visible;
+            return updatedVisibility;
         });
+    };
 
-        const sortedSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
-        const trendLabels = sortedSnippets.map(snippet => new Date(snippet.date).toLocaleDateString());
-        const sentimentScores = sortedSnippets.map(snippet => snippet.score);
+    const handleDateRangeChange = (index, range) => {
+        setDateRanges(prev => {
+            const updatedRanges = [...prev];
+            updatedRanges[index] = { start: range[0], end: range[1] };
+            return updatedRanges;
+        });
+    };
+
+    // Modify this function to handle empty or undefined snippets
+    const getAverageSentimentByDay = (snippets = []) => {
         const dayStats = new Array(7).fill(0).map(() => []);
-        const criticalPanthers = [];
 
-        sortedSnippets.forEach(snippet => {
+        if (!snippets || snippets.length === 0) {
+            return dayStats.map(() => 0);  // Return an array of zeros if no data
+        }
+
+        snippets.forEach(snippet => {
             const dayOfWeek = new Date(snippet.date).getDay();
-            dayStats[dayOfWeek].push(snippet.score);
-
-            if (snippet.score < 3) {
-                criticalPanthers.push(snippet);
+            if (dayStats[dayOfWeek]) {
+                dayStats[dayOfWeek].push(snippet.score);
             }
         });
 
-        const dayStatsAverages = dayStats.map(scores => {
-            if (scores.length === 0) return 0;
-            return scores.reduce((sum, score) => sum + score, 0) / scores.length;
-        });
-
-        setTrendsData({
-            labels: trendLabels,
-            datasets: [
-                {
-                    label: 'Sentiment Scores Over Time',
-                    data: sentimentScores,
-                    borderColor: 'rgba(75,192,192,1)',
-                    backgroundColor: 'rgba(75,192,192,0.2)',
-                },
-            ],
-        });
-
-        setDayStatsData({
-            labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-            datasets: [
-                {
-                    label: 'Average Sentiment by Day',
-                    data: dayStatsAverages,
-                    backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                },
-            ],
-        });
-
-        setCriticalPanthersData({
-            labels: criticalPanthers.map(snippet => new Date(snippet.date).toLocaleDateString()),
-            datasets: [
-                {
-                    label: 'Critical Panthers (Low Sentiment)',
-                    data: criticalPanthers.map(snippet => snippet.score),
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
-                },
-            ],
-        });
-
-        if (chartRef.current) {
-            chartRef.current.update();
-        }
+        return dayStats.map(scores => scores.length ? (scores.reduce((a, b) => a + b) / scores.length) : 0);
     };
 
     return (
         <div className="favorite-graphs-page">
             <h2 className="page-title">Team Analytics Dashboard</h2>
 
-            <div className="team-selection">
-                <label>Select Team:</label>
-                <select
-                    value={selectedTeam ? selectedTeam.id : ''}
-                    onChange={(e) => {
-                        const team = teams.find(t => t.id === parseInt(e.target.value));
-                        setSelectedTeam(team);
-                    }}
-                >
-                    <option value="" disabled>Select a team</option>
-                    {teams.map(team => (
-                        <option key={team.id} value={team.id}>{team.team_name}</option>
-                    ))}
-                </select>
-            </div>
+            {[0, 1, 2].map((i) => (
+                <div key={i} className="chart-section">
+                    <div className="dropdown-group">
+                        <label>Select Team for Graph {i + 1}:</label>
+                        <select
+                            value={selectedTeams[i] ? selectedTeams[i].id : ''}
+                            onChange={(e) => {
+                                const team = teams.find(t => t.id === parseInt(e.target.value));
+                                setSelectedTeams(prev => {
+                                    const updatedTeams = [...prev];
+                                    updatedTeams[i] = team;
+                                    return updatedTeams;
+                                });
+                            }}
+                        >
+                            <option value="" disabled>Select a team</option>
+                            {teams.map(team => (
+                                <option key={team.id} value={team.id}>{team.team_name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-            <div className="chart-section">
-                <h3>Trends Across Team</h3>
-                <Line data={trendsData} ref={chartRef} />
-            </div>
+                    <div className="dropdown-group">
+                        <label>Select Time Period for Graph {i + 1}:</label>
+                        <select
+                            value={timePeriods[i]}
+                            onChange={(e) => handleTimePeriodChange(i, e.target.value)}
+                        >
+                            <option value="Last week">Last week</option>
+                            <option value="Last month">Last month</option>
+                            <option value="Last year">Last year</option>
+                            <option value="Calendar">Calendar</option>
+                        </select>
+                    </div>
 
-            <div className="chart-section">
-                <h3>Stats by Days of the Week</h3>
-                <Bar data={dayStatsData} ref={chartRef} />
-            </div>
+                    {calendarVisible[i] && (
+                        <div className="calendar-container">
+                            <Calendar
+                                selectRange={true}
+                                onChange={(range) => handleDateRangeChange(i, range)}
+                                value={[dateRanges[i].start, dateRanges[i].end]}
+                            />
+                        </div>
+                    )}
 
-            <div className="chart-section">
-                <h3>Critical Panthers</h3>
-                <Radar data={criticalPanthersData} ref={chartRef} />
-            </div>
+                    <div className="chart-section">
+                        {i === 0 && (
+                            <Radar
+                                data={snippets[i] && snippets[i].length > 0
+                                    ? {
+                                        labels: snippets[i].filter(snippet => snippet.score < 5).map(snippet => new Date(snippet.date).toLocaleDateString()),
+                                        datasets: [{
+                                            label: `Critical Panthers (Low Sentiment)`,
+                                            data: snippets[i].filter(snippet => snippet.score < 5).map(snippet => snippet.score),
+                                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                            borderColor: 'rgba(255, 99, 132, 1)',
+                                            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                                        }]
+                                    }
+                                    : { labels: [], datasets: [] }
+                                }
+                                ref={chartRefs[i]}
+                            />
+                        )}
 
-            <div className="chart-section">
-                <h3>Ad Hoc Reports</h3>
-                <Calendar
-                    selectRange={true}
-                    onChange={(dateRange) => {
-                        setStartDate(dateRange[0]);
-                        setEndDate(dateRange[1]);
-                    }}
-                    value={[startDate, endDate]}
-                />
-                <Bar data={trendsData} ref={chartRef} /> {/* Placeholder for ad hoc reports */}
-            </div>
+                        {i === 1 && (
+                            <Bar
+                                data={snippets[i] && snippets[i].length > 0
+                                    ? {
+                                        labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+                                        datasets: [{
+                                            label: `Average Sentiment by Day`,
+                                            data: getAverageSentimentByDay(snippets[i]),
+                                            backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                                            borderColor: 'rgba(153, 102, 255, 1)',
+                                        }]
+                                    }
+                                    : { labels: [], datasets: [] }
+                                }
+                                ref={chartRefs[i]}
+                            />
+                        )}
+
+                        {i === 2 && (
+                            <Line
+                                data={snippets[i] && snippets[i].length > 0
+                                    ? {
+                                        labels: snippets[i].map(snippet => new Date(snippet.date).toLocaleDateString()),
+                                        datasets: [{
+                                            label: `Sentiment Scores Over Time`,
+                                            data: snippets[i].map(snippet => snippet.score),
+                                            borderColor: 'rgba(75,192,192,1)',
+                                            backgroundColor: 'rgba(75,192,192,0.2)',
+                                        }]
+                                    }
+                                    : { labels: [], datasets: [] }
+                                }
+                                ref={chartRefs[i]}
+                            />
+                        )}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };
