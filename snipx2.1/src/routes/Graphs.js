@@ -1,5 +1,3 @@
-// Graphs.js
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
@@ -33,7 +31,7 @@ const Graphs = () => {
 
     useEffect(() => {
         fetchSnippets();
-    }, [selectedUserOrTeam]);
+    }, [selectedUserOrTeam, selectedEntityType]);
 
     useEffect(() => {
         updateChartData();
@@ -70,11 +68,27 @@ const Graphs = () => {
 
     const fetchSnippets = async () => {
         try {
-            const endpoint = `https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`;
-            const response = await axios.post(endpoint, {
-                id: selectedUserOrTeam.id,
-            });
+            let endpoint;
+            let payload = {};
 
+            if (selectedEntityType === 'users' && selectedUserOrTeam) {
+                // If a user is selected, call the user snippets endpoint
+                endpoint = `https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`;
+                payload = { id: selectedUserOrTeam.id };
+            } else if (selectedEntityType === 'teams' && selectedUserOrTeam) {
+                // If a team is selected, call the company snippets endpoint
+                endpoint = `https://extension-360407.lm.r.appspot.com/api/team_snippets`;
+                payload = { teamIdReq: selectedUserOrTeam.id };
+            }
+
+            if (!endpoint) {
+                console.error("No endpoint selected for fetching snippets");
+                return;
+            }
+
+            const response = await axios.post(endpoint, payload);
+            console.log("selected id", selectedUserOrTeam.id)
+            console.log("fetched snippets", response.data)
             setSnippets(response.data);
         } catch (error) {
             console.error("Error fetching snippets:", error);
