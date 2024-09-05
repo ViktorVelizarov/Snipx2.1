@@ -43,6 +43,7 @@ const NavBar = () => {
             document.documentElement.style.setProperty('--colored-text', 'white');
             document.documentElement.style.setProperty('--black-text', 'white');
             document.documentElement.style.setProperty('--pagination-disabled', 'rgb(100,100,100)');
+            document.documentElement.style.setProperty('--chart-section', 'rgb(100,100,100)');
             setSnipXImage(SnipXGradientImage);
         } else {
             document.documentElement.style.setProperty('--navbar-color', '#8C4EA0');
@@ -56,6 +57,7 @@ const NavBar = () => {
             document.documentElement.style.setProperty('--colored-text', '#8C4EA0');
             document.documentElement.style.setProperty('--black-text', 'black');
             document.documentElement.style.setProperty('--pagination-disabled', '#ccc');
+            document.documentElement.style.setProperty('--chart-section', 'white');
             setSnipXImage(SnipXWhiteImage);
         }
         setIsDarkMode(!isDarkMode);
