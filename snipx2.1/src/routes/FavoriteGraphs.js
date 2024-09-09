@@ -5,6 +5,7 @@ import axios from 'axios';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import './FavoriteGraphs.css';
+import { useOutletContext } from 'react-router-dom';
 
 import {
     Chart as ChartJS,
@@ -19,11 +20,10 @@ import {
     Legend
 } from 'chart.js';
 
-// Register required components
 ChartJS.register(
     CategoryScale,
     LinearScale,
-    RadialLinearScale,  // Ensure this is registered
+    RadialLinearScale,
     PointElement,
     LineElement,
     BarElement,
@@ -34,29 +34,47 @@ ChartJS.register(
 
 const FavoriteGraphs = () => {
     const { user } = useAuth();
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
-    const [selectedTeam, setSelectedTeam] = useState(null);
+    const { isDarkMode } = useOutletContext(); // Capture dark mode state
     const [teams, setTeams] = useState([]);
-    const [snippets, setSnippets] = useState([]);
-    const [trendsData, setTrendsData] = useState({ labels: [], datasets: [] });
-    const [dayStatsData, setDayStatsData] = useState({ labels: [], datasets: [] });
-    const [criticalPanthersData, setCriticalPanthersData] = useState({ labels: [], datasets: [] });
+    const [snippets, setSnippets] = useState([[], [], []]);
+    const chartRefs = [useRef(null), useRef(null), useRef(null)];
     const chartRef = useRef(null);
+
+    const [selectedTeams, setSelectedTeams] = useState([null, null, null]);
+    const [timePeriods, setTimePeriods] = useState(['Last week', 'Last week', 'Last week']);
+    const [pdpData, setPdpData] = useState({ labels: [], datasets: [] });
+    const [calendarVisible, setCalendarVisible] = useState([false, false, false]);
+    const [dateRanges, setDateRanges] = useState([
+        { start: new Date(), end: new Date() },
+        { start: new Date(), end: new Date() },
+        { start: new Date(), end: new Date() }
+    ]);
+
+    const defaultChartData = {
+        labels: [],
+        datasets: []
+    };
 
     useEffect(() => {
         fetchTeams();
+        generatePdpData(); // Generate PDP data when component mounts
     }, [user]);
 
     useEffect(() => {
-        if (selectedTeam) {
-            fetchSnippets();
-        }
-    }, [selectedTeam]);
+        selectedTeams.forEach((team, index) => {
+            if (team) {
+                fetchSnippets(team.id, index);
+            }
+        });
+    }, [selectedTeams]);
 
     useEffect(() => {
-        updateChartData();
-    }, [startDate, endDate, snippets]);
+        snippets.forEach((_, index) => {
+            if (snippets[index].length > 0) {
+                updateChartData(index);
+            }
+        });
+    }, [snippets, timePeriods, dateRanges, isDarkMode]); // Add isDarkMode to the dependency array
 
     const fetchTeams = async () => {
         try {
@@ -71,23 +89,46 @@ const FavoriteGraphs = () => {
         }
     };
 
-    const fetchSnippets = async () => {
+    const fetchSnippets = async (teamId, index) => {
         try {
             const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/team_snippets", {
-                teamIdReq: selectedTeam.id,
+                teamIdReq: teamId,
             });
-            console.log("snippets:", response.data)
-            setSnippets(response.data);
+            setSnippets(prev => {
+                const newSnippets = [...prev];
+                newSnippets[index] = response.data;
+                return newSnippets;
+            });
         } catch (error) {
             console.error("Error fetching snippets:", error);
         }
     };
 
-    const updateChartData = () => {
-        const filteredSnippets = snippets.filter(snippet => {
-            const snippetDate = new Date(snippet.date);
-            return snippetDate >= startDate && snippetDate <= endDate;
-        });
+    const filterSnippetsByTime = (snippets, timePeriod, dateRange) => {
+        const now = new Date();
+        let filteredSnippets = snippets;
+
+        if (timePeriod === 'Last week') {
+            const oneWeekAgo = new Date(now.setDate(now.getDate() - 7));
+            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneWeekAgo);
+        } else if (timePeriod === 'Last month') {
+            const oneMonthAgo = new Date(now.setMonth(now.getMonth() - 1));
+            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneMonthAgo);
+        } else if (timePeriod === 'Last year') {
+            const oneYearAgo = new Date(now.setFullYear(now.getFullYear() - 1));
+            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneYearAgo);
+        } else if (timePeriod === 'Calendar') {
+            filteredSnippets = snippets.filter(snippet => {
+                const snippetDate = new Date(snippet.date);
+                return snippetDate >= dateRange.start && snippetDate <= dateRange.end;
+            });
+        }
+
+        return filteredSnippets;
+    };
+
+    const updateChartData = (index) => {
+        const filteredSnippets = filterSnippetsByTime(snippets[index], timePeriods[index], dateRanges[index]);
 
         const sortedSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
         const trendLabels = sortedSnippets.map(snippet => new Date(snippet.date).toLocaleDateString());
@@ -99,7 +140,7 @@ const FavoriteGraphs = () => {
             const dayOfWeek = new Date(snippet.date).getDay();
             dayStats[dayOfWeek].push(snippet.score);
 
-            if (snippet.score < 3) {
+            if (snippet.score < 5) {
                 criticalPanthers.push(snippet);
             }
         });
@@ -109,94 +150,235 @@ const FavoriteGraphs = () => {
             return scores.reduce((sum, score) => sum + score, 0) / scores.length;
         });
 
-        setTrendsData({
-            labels: trendLabels,
-            datasets: [
-                {
-                    label: 'Sentiment Scores Over Time',
-                    data: sentimentScores,
-                    borderColor: 'rgba(75,192,192,1)',
-                    backgroundColor: 'rgba(75,192,192,0.2)',
-                },
-            ],
-        });
+        const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--graph-line-color').trim();
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim();
 
-        setDayStatsData({
-            labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-            datasets: [
-                {
-                    label: 'Average Sentiment by Day',
-                    data: dayStatsAverages,
-                    backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                },
-            ],
-        });
-
-        setCriticalPanthersData({
-            labels: criticalPanthers.map(snippet => new Date(snippet.date).toLocaleDateString()),
-            datasets: [
-                {
+        // Update the charts for the respective graph
+        if (index === 0 && chartRefs[0].current) {
+            chartRefs[0].current.data = {
+                labels: criticalPanthers.map(snippet => new Date(snippet.date).toLocaleDateString()),
+                datasets: [{
                     label: 'Critical Panthers (Low Sentiment)',
                     data: criticalPanthers.map(snippet => snippet.score),
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderColor: 'rgba(255, 99, 132, 1)',
                     pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                }]
+            };
+            chartRefs[0].current.options = {
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: textColor,
+                        },
+                    },
+                },
+                scales: {
+                    r: {
+                        ticks: { display: false }, // Hide the ticks (axis labels)
+                        grid: { display: false }, // Hide the grid
+                        pointLabels: {
+                            color: textColor, // Change color of radar labels (dates)
+                        },
+                    }
+                },
+            };
+            chartRefs[0].current.update();
+        }
+
+        if (index === 1 && chartRefs[1].current) {
+            chartRefs[1].current.data = {
+                labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+                datasets: [{
+                    label: 'Average Sentiment by Day',
+                    data: dayStatsAverages,
+                    backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                }]
+            };
+            chartRefs[1].current.options = {
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: textColor,
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: textColor,
+                        },
+                    },
+                    y: {
+                        ticks: {
+                            color: textColor,
+                        },
+                    },
+                },
+            };
+            chartRefs[1].current.update();
+        }
+
+        if (index === 2 && chartRefs[2].current) {
+            chartRefs[2].current.data = {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Sentiment Scores Over Time',
+                    data: sentimentScores,
+                    borderColor: lineColor,
+                    backgroundColor: 'rgba(75,192,192,0.2)',
+                }]
+            };
+            chartRefs[2].current.options = {
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: textColor,
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: textColor,
+                        },
+                    },
+                    y: {
+                        ticks: {
+                            color: textColor,
+                        },
+                    },
+                },
+            };
+            chartRefs[2].current.update();
+        }
+    };
+
+    const handleTimePeriodChange = (index, value) => {
+        const updatedTimePeriods = [...timePeriods];
+        updatedTimePeriods[index] = value;
+        setTimePeriods(updatedTimePeriods);
+        if (value === "Calendar") {
+            toggleCalendarVisibility(index, true);
+        } else {
+            toggleCalendarVisibility(index, false);
+        }
+    };
+
+    const toggleCalendarVisibility = (index, visible) => {
+        setCalendarVisible(prev => {
+            const updatedVisibility = [...prev];
+            updatedVisibility[index] = visible;
+            return updatedVisibility;
+        });
+    };
+
+    const handleDateRangeChange = (index, range) => {
+        setDateRanges(prev => {
+            const updatedRanges = [...prev];
+            updatedRanges[index] = { start: range[0], end: range[1] };
+            return updatedRanges;
+        });
+
+        // Trigger immediate re-render for the chart
+        updateChartData(index);
+    };
+
+    // Generate PDP Radar data (sample for skill matrix)
+    const generatePdpData = () => {
+        const pdpLabels = ['Leadership', 'Communication', 'Problem Solving', 'Teamwork', 'Adaptability'];
+        const pdpScores = pdpLabels.map(() => Math.floor(Math.random() * 10) + 1);
+        setPdpData({
+            labels: pdpLabels,
+            datasets: [
+                {
+                    label: 'PDP Progress',
+                    data: pdpScores,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointBorderColor: '#fff',
                 },
             ],
         });
-
-        if (chartRef.current) {
-            chartRef.current.update();
-        }
     };
 
     return (
         <div className="favorite-graphs-page">
             <h2 className="page-title">Team Analytics Dashboard</h2>
 
-            <div className="team-selection">
-                <label>Select Team:</label>
-                <select
-                    value={selectedTeam ? selectedTeam.id : ''}
-                    onChange={(e) => {
-                        const team = teams.find(t => t.id === parseInt(e.target.value));
-                        setSelectedTeam(team);
-                    }}
-                >
-                    <option value="" disabled>Select a team</option>
-                    {teams.map(team => (
-                        <option key={team.id} value={team.id}>{team.team_name}</option>
-                    ))}
-                </select>
-            </div>
+            <div className="centered-content">
+                {[0, 1, 2].map((i) => (
+                    <div key={i} className="chart-section">
+                        <h3 className="chart-title">{i === 0 ? 'Critical Panthers' : i === 1 ? 'Average Sentiment by Day' : 'Sentiment Scores Over Time'}</h3>
+                        <div className="dropdown-container">
+                            <select
+                                value={selectedTeams[i] ? selectedTeams[i].id : ''}
+                                onChange={(e) => {
+                                    const team = teams.find(t => t.id === parseInt(e.target.value));
+                                    const updatedTeams = [...selectedTeams];
+                                    updatedTeams[i] = team;
+                                    setSelectedTeams(updatedTeams);
+                                }}
+                            >
+                                <option value="" disabled>Select a team</option>
+                                {teams.map(team => (
+                                    <option key={team.id} value={team.id}>{team.team_name}</option>
+                                ))}
+                            </select>
 
-            <div className="chart-section">
-                <h3>Trends Across Team</h3>
-                <Line data={trendsData} ref={chartRef} />
-            </div>
+                            <select
+                                value={timePeriods[i]}
+                                onChange={(e) => handleTimePeriodChange(i, e.target.value)}
+                            >
+                                <option value="Last week">Last week</option>
+                                <option value="Last month">Last month</option>
+                                <option value="Last year">Last year</option>
+                                <option value="Calendar">Calendar</option>
+                            </select>
 
-            <div className="chart-section">
-                <h3>Stats by Days of the Week</h3>
-                <Bar data={dayStatsData} ref={chartRef} />
-            </div>
+                            {calendarVisible[i] && (
+                                <Calendar
+                                    className="date-range-picker"
+                                    selectRange
+                                    onChange={(range) => handleDateRangeChange(i, range)}
+                                    value={[dateRanges[i].start, dateRanges[i].end]}
+                                />
+                            )}
+                        </div>
 
-            <div className="chart-section">
-                <h3>Critical Panthers</h3>
-                <Radar data={criticalPanthersData} ref={chartRef} />
-            </div>
+                        {/* Graphs */}
+                        {i === 0 && <Radar ref={chartRefs[0]} data={defaultChartData} />}
+                        {i === 1 && <Bar ref={chartRefs[1]} data={defaultChartData} />}
+                        {i === 2 && <Line ref={chartRefs[2]} data={defaultChartData} />}
+                    </div>
+                ))}
 
-            <div className="chart-section">
-                <h3>Ad Hoc Reports</h3>
-                <Calendar
-                    selectRange={true}
-                    onChange={(dateRange) => {
-                        setStartDate(dateRange[0]);
-                        setEndDate(dateRange[1]);
-                    }}
-                    value={[startDate, endDate]}
-                />
-                <Bar data={trendsData} ref={chartRef} /> {/* Placeholder for ad hoc reports */}
+                {/* PDP Radar Chart */}
+                <div className="chart-section">
+                    <h3 className="chart-title">PDP Progress - Skill Matrix</h3>
+                    <Radar
+                        data={pdpData}
+                        options={{
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                                    },
+                                },
+                            },
+                            scales: {
+                                r: {
+                                    pointLabels: {
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                                    },
+                                },
+                            },
+                        }}
+                        ref={chartRef}
+                    />
+                </div>
             </div>
         </div>
     );

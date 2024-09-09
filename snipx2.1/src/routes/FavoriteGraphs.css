@@ -1,33 +1,76 @@
-/* FavoriteGraphs.css */
+:root{
+  --chart-section:white;
+}
+
+.centered-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap : 20px
+}
+
+.date-range-picker {
+  margin-top: 20px;
+}
+
+.favorite-graphs-page .react-calendar__tile {
+  border-radius: 0 !important; /* Remove border radius for tiles */
+}
+
 
 .favorite-graphs-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    background: var(--bg-color);
-    color: var(--colored-text);
-    min-height: 100vh;
+  padding: 20px;
+}
+
+.page-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.team-selection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.team-selection label {
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+.team-selection select {
+  padding: 5px;
+  font-size: 14px;
+  max-width: 250px; /* Limit the width of the dropdown */
+}
+
+/* Grid layout for the charts and calendar */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* Centering elements in the grid */
+.chart-section, .calendar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--chart-section);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  min-height: 600px; /* Ensure all sections have the same height */
+  width: 700px; /* Ensure all sections have the same width */
+}
+
+/* Responsiveness for smaller screens */
+@media (max-width: 768px) {
+  .grid-container {
+      grid-template-columns: 1fr;
   }
-  
-  h2 {
-    font-size: 36px;
-    font-weight: bold;
-    margin-bottom: 40px;
-  }
-  
-  .graphs-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    width: 100%;
-    max-width: 1200px;
-  }
-  
-  .graph-wrapper {
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  }
-  
+}
