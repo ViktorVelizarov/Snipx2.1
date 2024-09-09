@@ -81,6 +81,9 @@ const NavBar = () => {
                                 <Link to="/add-snippet"><FaPlusSquare /> Create Snippets</Link>
                             </li>
                             <li>
+                                <Link to="/user-pdp"><FaPlusSquare /> My PDP</Link>
+                            </li>
+                            <li>
                                 <Link to="/weekly-report"><FaCalendarPlus /> Weekly Report</Link>
                             </li>
                             <li>
