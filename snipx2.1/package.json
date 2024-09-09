@@ -34,6 +34,7 @@
     "react-router-dom": "^6.26.1",
     "react-scripts": "^5.0.1",
     "shell-quote": "^1.8.1",
+    "snipx2.1": "file:",
     "styled-components": "^6.1.13",
     "web-vitals": "^4.2.3",
     "zod": "^3.23.8"

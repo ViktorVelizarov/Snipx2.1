@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Line, Bar, Radar } from 'react-chartjs-2';
+import { Line, Bar, Radar, Doughnut } from 'react-chartjs-2';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
 import Calendar from 'react-calendar';
@@ -17,7 +17,8 @@ import {
     BarElement,
     Title,
     Tooltip,
-    Legend
+    Legend,
+    ArcElement
 } from 'chart.js';
 
 ChartJS.register(
@@ -29,7 +30,8 @@ ChartJS.register(
     BarElement,
     Title,
     Tooltip,
-    Legend
+    Legend,
+    ArcElement
 );
 
 const FavoriteGraphs = () => {
@@ -38,26 +40,40 @@ const FavoriteGraphs = () => {
     const [teams, setTeams] = useState([]);
     const [snippets, setSnippets] = useState([[], [], []]);
     const chartRefs = [useRef(null), useRef(null), useRef(null)];
-    const chartRef = useRef(null);
+    const pdpChartRef = useRef(null);
+    const progressChartRef = useRef(null);
 
     const [selectedTeams, setSelectedTeams] = useState([null, null, null]);
     const [timePeriods, setTimePeriods] = useState(['Last week', 'Last week', 'Last week']);
     const [pdpData, setPdpData] = useState({ labels: [], datasets: [] });
+    const [progressData, setProgressData] = useState({
+        labels: ['Progress', 'Remaining'],
+        datasets: [
+            {
+                data: [70, 30], // 70% progress, 30% remaining
+                backgroundColor: ['green', 'red'],
+                borderWidth: 0,
+                cutout: '50%', // Doughnut style
+            }
+        ]
+    });
     const [calendarVisible, setCalendarVisible] = useState([false, false, false]);
     const [dateRanges, setDateRanges] = useState([
         { start: new Date(), end: new Date() },
         { start: new Date(), end: new Date() },
         { start: new Date(), end: new Date() }
     ]);
-
     const defaultChartData = {
         labels: [],
         datasets: []
     };
+    const progress = 80; // Example progress value
+    const remaining = 100 - progress;
 
     useEffect(() => {
         fetchTeams();
         generatePdpData(); // Generate PDP data when component mounts
+        generateProgressData(); // Generate overall progress data
     }, [user]);
 
     useEffect(() => {
@@ -75,6 +91,21 @@ const FavoriteGraphs = () => {
             }
         });
     }, [snippets, timePeriods, dateRanges, isDarkMode]); // Add isDarkMode to the dependency array
+
+    useEffect(() => {
+        setProgressData({
+            labels: ['Progress', 'Remaining'],
+            datasets: [
+                {
+                    data: [progress, remaining],
+                    backgroundColor: ['green', 'red'],
+                    cutout: '50%', // Doughnut style for thickness
+                    circumference: 180,
+                    rotation: -90, // Rotate to start from top and face down
+                }
+            ]
+        });
+    }, [progress, remaining]);
 
     const fetchTeams = async () => {
         try {
@@ -281,7 +312,6 @@ const FavoriteGraphs = () => {
             return updatedRanges;
         });
 
-        // Trigger immediate re-render for the chart
         updateChartData(index);
     };
 
@@ -304,14 +334,45 @@ const FavoriteGraphs = () => {
         });
     };
 
+    // Generate progress data for half-circle doughnut chart
+    const generateProgressData = () => {
+        const progress = 70;
+        setProgressData({
+            labels: ['Progress', 'Remaining'],
+            datasets: [
+                {
+                    data: [progress, 100 - progress],
+                    backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(192, 192, 192, 0.6)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(192, 192, 192, 1)'],
+                    borderWidth: 1,
+                },
+            ],
+        });
+    };
+
     return (
         <div className="favorite-graphs-page">
-            <h2 className="page-title">Team Analytics Dashboard</h2>
+            {/* Overall Progress Half-circle Doughnut */}
+            <div className="overall-progress">
+                <h2 className="page-title">Team Analytics Dashboard</h2>
+                <div className="half-doughnut-container">
+                <Doughnut 
+                        data={progressData} 
+                        options={{ 
+                            responsive: true, 
+                            maintainAspectRatio: false, 
+                            plugins: {
+                                legend: { display: false } // Hide legend for a clean look
+                            }
+                        }} 
+                    />
+                </div>
+            </div>
 
             <div className="centered-content">
                 {[0, 1, 2].map((i) => (
                     <div key={i} className="chart-section">
-                        <h3 className="chart-title">{i === 0 ? 'Critical Panthers' : i === 1 ? 'Average Sentiment by Day' : 'Sentiment Scores Over Time'}</h3>
+                        <h3>{i === 0 ? 'Critical Panthers' : i === 1 ? 'Average Sentiment by Day' : 'Sentiment Scores Over Time'}</h3>
                         <div className="dropdown-container">
                             <select
                                 value={selectedTeams[i] ? selectedTeams[i].id : ''}
@@ -348,7 +409,6 @@ const FavoriteGraphs = () => {
                             )}
                         </div>
 
-                        {/* Graphs */}
                         {i === 0 && <Radar ref={chartRefs[0]} data={defaultChartData} />}
                         {i === 1 && <Bar ref={chartRefs[1]} data={defaultChartData} />}
                         {i === 2 && <Line ref={chartRefs[2]} data={defaultChartData} />}
@@ -357,9 +417,10 @@ const FavoriteGraphs = () => {
 
                 {/* PDP Radar Chart */}
                 <div className="chart-section">
-                    <h3 className="chart-title">PDP Progress - Skill Matrix</h3>
+                    <h3>PDP Progress - Skill Matrix</h3>
                     <Radar
                         data={pdpData}
+                        ref={pdpChartRef}
                         options={{
                             plugins: {
                                 legend: {
@@ -376,7 +437,6 @@ const FavoriteGraphs = () => {
                                 },
                             },
                         }}
-                        ref={chartRef}
                     />
                 </div>
             </div>

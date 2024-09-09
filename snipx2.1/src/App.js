@@ -23,6 +23,7 @@ import React, { createContext } from "react";
 import Home from "./routes/Home";
 import MainLayout from "./routes/MainLayout";
 import { ProtectedLayout } from "./routes/ProtectedLayout";
+import SkillsMatrix from "./routes/SkillsMatrix";
 // Creating context for the base API URL.
 // export const apiUrl = createContext("http://localhost:8080"); //local api during development
 export const apiUrl = createContext("https://extension-360407.lm.r.appspot.com");
@@ -42,6 +43,7 @@ export const router = createBrowserRouter(
           <Route path="my-snippets" element={<MySnippets />} />
           <Route path="graphs" element={<Graphs />} />
           <Route path="favorite-graphs" element={<FavoriteGraphs />} />
+          <Route path="skills-matrix" element={<SkillsMatrix />} />
         <Route element={<ProtectedLayout />}>
           
           <Route path="snippets" element={<Snippets />} />

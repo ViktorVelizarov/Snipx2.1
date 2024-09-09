@@ -72,11 +72,9 @@ const Graphs = () => {
             let payload = {};
 
             if (selectedEntityType === 'users' && selectedUserOrTeam) {
-                // If a user is selected, call the user snippets endpoint
                 endpoint = `https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`;
                 payload = { id: selectedUserOrTeam.id };
             } else if (selectedEntityType === 'teams' && selectedUserOrTeam) {
-                // If a team is selected, call the company snippets endpoint
                 endpoint = `https://extension-360407.lm.r.appspot.com/api/team_snippets`;
                 payload = { teamIdReq: selectedUserOrTeam.id };
             }
@@ -87,8 +85,6 @@ const Graphs = () => {
             }
 
             const response = await axios.post(endpoint, payload);
-            console.log("selected id", selectedUserOrTeam.id)
-            console.log("fetched snippets", response.data)
             setSnippets(response.data);
         } catch (error) {
             console.error("Error fetching snippets:", error);
@@ -171,6 +167,10 @@ const Graphs = () => {
         navigate('/favorite-graphs');
     };
 
+    const GoToSkillsMatrix = () => {
+        navigate('/skills-matrix'); // Make sure there's a route for Skills Matrix
+    };
+
     return (
         <div className="graphs-page">
             <h2 className="page-title">Graphs</h2>
@@ -218,6 +218,9 @@ const Graphs = () => {
                         </button>
                         <button className="see-favorites-button" onClick={GoToFavoriteGraphs}>
                             See Favorite Graphs
+                        </button>
+                        <button className="skills-matrix-button" onClick={GoToSkillsMatrix}>
+                            Skills Matrix
                         </button>
                     </div>
                 </div>

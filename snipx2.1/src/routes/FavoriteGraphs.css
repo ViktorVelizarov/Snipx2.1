@@ -1,5 +1,5 @@
-:root{
-  --chart-section:white;
+:root {
+  --chart-section: white;
 }
 
 .centered-content {
@@ -7,7 +7,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap : 20px
+  gap: 20px;
 }
 
 .date-range-picker {
@@ -18,15 +18,26 @@
   border-radius: 0 !important; /* Remove border radius for tiles */
 }
 
-
 .favorite-graphs-page {
   padding: 20px;
 }
 
-.page-title {
-  text-align: center;
-  margin-bottom: 20px;
+.overall-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40px;
 }
+
+.half-doughnut-container {
+  width: 200px;
+  height: 100px; /* Ensure it stays a half-circle */
+}
+
+.page-title {
+  margin-right: 80px; /* Adds space between title and the chart */
+}
+
 
 .team-selection {
   display: flex;
@@ -72,5 +83,15 @@
 @media (max-width: 768px) {
   .grid-container {
       grid-template-columns: 1fr;
+  }
+
+  .overall-progress {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; /* Reduce space for smaller screens */
+  }
+
+  .half-doughnut-container {
+    margin-top: 20px;
   }
 }
