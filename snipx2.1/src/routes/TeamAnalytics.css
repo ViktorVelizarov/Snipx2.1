@@ -1,5 +1,6 @@
 :root {
   --chart-section: white;
+  --black-text: black;
 }
 
 .centered-content {
@@ -15,7 +16,7 @@
 }
 
 .favorite-graphs-page .react-calendar__tile {
-  border-radius: 0 !important; /* Remove border radius for tiles */
+  border-radius: 0 !important;
 }
 
 .favorite-graphs-page {
@@ -31,13 +32,12 @@
 
 .half-doughnut-container {
   width: 200px;
-  height: 100px; /* Ensure it stays a half-circle */
+  height: 100px;
 }
 
 .page-title {
-  margin-right: 80px; /* Adds space between title and the chart */
+  margin-right: 80px;
 }
-
 
 .team-selection {
   display: flex;
@@ -45,18 +45,12 @@
   margin-bottom: 20px;
 }
 
-.team-selection label {
-  margin-right: 10px;
-  font-weight: bold;
-}
-
 .team-selection select {
   padding: 5px;
   font-size: 14px;
-  max-width: 250px; /* Limit the width of the dropdown */
+  max-width: 250px;
 }
 
-/* Grid layout for the charts and calendar */
 .grid-container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -64,7 +58,10 @@
   align-items: start;
 }
 
-/* Centering elements in the grid */
+.grid-container h3 {
+  color: var(--black-text);
+}
+
 .chart-section, .calendar-container {
   display: flex;
   flex-direction: column;
@@ -75,20 +72,26 @@
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
-  min-height: 600px; /* Ensure all sections have the same height */
-  width: 700px; /* Ensure all sections have the same width */
+  min-height: 600px;
+  width: 700px;
 }
 
-/* Responsiveness for smaller screens */
+.dropdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
 @media (max-width: 768px) {
   .grid-container {
-      grid-template-columns: 1fr;
+    grid-template-columns: 1fr;
   }
 
   .overall-progress {
     flex-direction: column;
     align-items: center;
-    gap: 20px; /* Reduce space for smaller screens */
+    gap: 20px;
   }
 
   .half-doughnut-container {
