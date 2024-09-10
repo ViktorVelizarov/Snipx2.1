@@ -4,7 +4,7 @@ import { useAuth } from "../AuthProvider";
 import axios from 'axios';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import './FavoriteGraphs.css';
+import './TeamAnalytics.css';
 import { useOutletContext } from 'react-router-dom';
 
 import {
@@ -34,7 +34,7 @@ ChartJS.register(
     ArcElement
 );
 
-const FavoriteGraphs = () => {
+const TeamAnalytics = () => {
     const { user } = useAuth();
     const { isDarkMode } = useOutletContext(); // Capture dark mode state
     const [teams, setTeams] = useState([]);
@@ -444,4 +444,4 @@ const FavoriteGraphs = () => {
     );
 };
 
-export default FavoriteGraphs;
+export default TeamAnalytics;

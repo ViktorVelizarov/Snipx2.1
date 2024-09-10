@@ -164,7 +164,7 @@ const Graphs = () => {
     };
 
     const GoToFavoriteGraphs = () => {
-        navigate('/favorite-graphs');
+        navigate('/team-analytics');
     };
 
     const GoToSkillsMatrix = () => {
@@ -217,7 +217,7 @@ const Graphs = () => {
                             {isFavorite ? <FaStar size={24} /> : <FaRegStar size={24} />}
                         </button>
                         <button className="see-favorites-button" onClick={GoToFavoriteGraphs}>
-                            See Favorite Graphs
+                            Team Analytics Dashboard
                         </button>
                         <button className="skills-matrix-button" onClick={GoToSkillsMatrix}>
                             Skills Matrix

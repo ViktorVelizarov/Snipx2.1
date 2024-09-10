@@ -90,12 +90,3 @@
     outline: none;
     color: var(--btn-bg-color2);
 }
-
-.see-favorites-button {
-    background-color: var(--btn-bg-color);
-    color: white;
-    border: none;
-    border-radius: 20px;
-    padding: 10px 15px;
-    cursor: pointer;
-}

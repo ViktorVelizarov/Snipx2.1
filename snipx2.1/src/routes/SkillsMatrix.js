@@ -6,6 +6,9 @@ import './SkillsMatrix.css';
 const SkillsMatrix = () => {
     const { user } = useAuth();
     const [users, setUsers] = useState([]);
+    const [teams, setTeams] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
+    const [selectedFilter, setSelectedFilter] = useState('Employees'); // Default to Employees
     const [skills, setSkills] = useState([
         { id: 1, title: 'Management' },
         { id: 2, title: 'Planning' },
@@ -15,11 +18,11 @@ const SkillsMatrix = () => {
         { id: 6, title: 'Presentation Skills' },
         { id: 7, title: 'Safety Training' },
     ]);
-
     const [userSkills, setUserSkills] = useState({});
     const [editingSkill, setEditingSkill] = useState(null);
 
     useEffect(() => {
+        fetchTeams();
         fetchUsers();
     }, [user]);
 
@@ -28,6 +31,26 @@ const SkillsMatrix = () => {
             generateRandomScores(); // Generate random scores after users are fetched
         }
     }, [users]);
+
+    useEffect(() => {
+        filterUsers();
+    }, [selectedFilter]);
+
+    const fetchTeams = async () => {
+        try {
+            const response = await fetch(`https://extension-360407.lm.r.appspot.com/api/teams?userId=${user.id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${user.token}`,
+                },
+            });
+            const data = await response.json();
+            setTeams(data);
+        } catch (error) {
+            console.error("Error fetching teams:", error);
+        }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -56,6 +79,19 @@ const SkillsMatrix = () => {
         setUserSkills(newUserSkills);
     };
 
+    const filterUsers = () => {
+        if (selectedFilter === 'Employees') {
+            setFilteredUsers(users); // Show all employees if "Employees" is selected
+        } else {
+            const team = teams.find(team => team.team_name === selectedFilter);
+            if (team && team.teamMembers) {
+                setFilteredUsers(users.filter(user => team.teamMembers.some(member => member.user_id === user.id)));
+            } else {
+                setFilteredUsers([]); // If no team found, show no users
+            }
+        }
+    };
+
     const handleSkillEdit = (skillId, newTitle) => {
         setSkills((prevSkills) =>
             prevSkills.map((skill) =>
@@ -76,7 +112,7 @@ const SkillsMatrix = () => {
 
     const calculateTotal = (skillId) => {
         let total = 0;
-        users.forEach((user) => {
+        filteredUsers.forEach((user) => {
             total += parseInt(userSkills[user.id]?.[skillId] || 0, 10);
         });
         return total;
@@ -84,7 +120,7 @@ const SkillsMatrix = () => {
 
     const calculateAverage = (skillId) => {
         const total = calculateTotal(skillId);
-        return (total / users.length).toFixed(1);
+        return (total / filteredUsers.length).toFixed(1);
     };
 
     const getCellBackgroundColor = (value) => {
@@ -103,7 +139,7 @@ const SkillsMatrix = () => {
                 return '#9046CF';  // Purple
             case '5':
             case 5:
-                return '#d637bf';     // Pink
+                return '#d637bf';  // Pink
             default:
                 return 'white'; // default background color
         }
@@ -116,7 +152,18 @@ const SkillsMatrix = () => {
             <table className="skills-matrix-table">
                 <thead>
                     <tr>
-                        <th style={{ backgroundColor: '#007BFF', color: 'white' }}>Employees</th>
+                        <th style={{ backgroundColor: '#007BFF', color: 'white' }}>
+                            <select
+                                value={selectedFilter}
+                                onChange={(e) => setSelectedFilter(e.target.value)}
+                                className="team-dropdown"
+                            >
+                                <option value="Employees">Employees</option>
+                                {teams.map(team => (
+                                    <option key={team.id} value={team.team_name}>{team.team_name}</option>
+                                ))}
+                            </select>
+                        </th>
                         {skills.map((skill) => (
                             <th key={skill.id} style={{ backgroundColor: '#007BFF', color: 'white' }}>
                                 {editingSkill === skill.id ? (
@@ -139,7 +186,7 @@ const SkillsMatrix = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {users.map((user) => (
+                    {filteredUsers.map((user) => (
                         <tr key={user.id}>
                             <td>{user.email}</td>
                             {skills.map((skill) => (
@@ -207,6 +254,7 @@ const SkillsMatrix = () => {
                     <span>5 - Can Coach</span>
                 </div>
             </div>
+            
         </div>
     );
 };

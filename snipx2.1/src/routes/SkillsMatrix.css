@@ -1,3 +1,7 @@
+:root{
+  --black-text:black;
+}
+
 .skills-matrix-container {
     padding: 20px;
   }
@@ -32,6 +36,7 @@
     display: flex;
     justify-content: space-around;
     margin-top: 20px;
+    color:var(--black-text)
   }
   
   .skills-matrix-captions div {
