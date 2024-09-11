@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Line, Bar, Radar, Doughnut } from 'react-chartjs-2';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
 import './TeamAnalytics.css';
 import { useOutletContext } from 'react-router-dom';
 
@@ -36,10 +34,10 @@ ChartJS.register(
 
 const TeamAnalytics = () => {
     const { user } = useAuth();
-    const { isDarkMode } = useOutletContext();
+    const { isDarkMode } = useOutletContext(); // Capture dark mode state
     const [teams, setTeams] = useState([]);
     const [users, setUsers] = useState([]);
-    const [snippets, setSnippets] = useState([]);
+    const [skillsRatings, setSkillsRatings] = useState([]);
     const [selectedTimePeriod, setSelectedTimePeriod] = useState('Last week');
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [selectedTeams, setSelectedTeams] = useState([]);
@@ -47,28 +45,26 @@ const TeamAnalytics = () => {
     const barChartRef = useRef(null);
     const radarCriticalPanthersRef = useRef(null);
     const radarPDPChartRef = useRef(null);
+    const doughnutRef = useRef(null);
 
     const [pdpData, setPdpData] = useState({ labels: [], datasets: [] });
     const [progressData, setProgressData] = useState({
         labels: ['Progress', 'Remaining'],
         datasets: [
             {
-                data: [70, 30],
+                data: [0, 100],
                 backgroundColor: ['green', 'red'],
                 borderWidth: 0,
                 cutout: '50%',
             }
         ]
     });
-    const [dateRanges, setDateRanges] = useState({ start: new Date(), end: new Date() });
-    const progress = 80;
-    const remaining = 100 - progress;
 
     useEffect(() => {
         fetchTeams();
         fetchUsers();
+        fetchRatings(); // Fetch ratings for progress calculation
         generatePdpData();
-        generateProgressData();
     }, [user]);
 
     useEffect(() => {
@@ -76,21 +72,6 @@ const TeamAnalytics = () => {
             fetchSnippets();
         }
     }, [selectedUsers, selectedTeams, selectedTimePeriod]);
-
-    useEffect(() => {
-        setProgressData({
-            labels: ['Progress', 'Remaining'],
-            datasets: [
-                {
-                    data: [progress, remaining],
-                    backgroundColor: ['green', 'red'],
-                    cutout: '50%',
-                    circumference: 180,
-                    rotation: -90,
-                }
-            ]
-        });
-    }, [progress, remaining]);
 
     const fetchTeams = async () => {
         try {
@@ -123,10 +104,56 @@ const TeamAnalytics = () => {
                 teamIds,
                 timePeriod: selectedTimePeriod,
             });
-            setSnippets(response.data);
             updateChartData(response.data);
         } catch (error) {
             console.error("Error fetching snippets:", error);
+        }
+    };
+
+    // Fetch skill ratings from the database
+    const fetchRatings = async () => {
+        try {
+            const response = await axios.get("https://extension-360407.lm.r.appspot.com/api/ratings", {
+                headers: {
+                    "Authorization": `Bearer ${user.token}`
+                }
+            });
+            const ratings = response.data;
+            setSkillsRatings(ratings);
+            calculateOverallProgress(ratings); // Calculate progress using the fetched ratings
+        } catch (error) {
+            console.error("Error fetching ratings:", error);
+        }
+    };
+
+    // Calculate overall progress based on the skills ratings
+    const calculateOverallProgress = (ratings) => {
+        if (ratings.length === 0) return;
+
+        // Assuming the max score for each skill is 5
+        const totalPossibleScore = ratings.length * 5;
+        const totalActualScore = ratings.reduce((acc, rating) => acc + rating.score, 0);
+
+        const progress = (totalActualScore / totalPossibleScore) * 100;
+        const remaining = 100 - progress;
+
+        // Update the doughnut chart data
+        setProgressData({
+            labels: ['Progress', 'Remaining'],
+            datasets: [
+                {
+                    data: [progress, remaining],
+                    backgroundColor: ['green', 'red'],
+                    cutout: '50%', // Doughnut style for thickness
+                    circumference: 180,
+                    rotation: -90, // Rotate to start from top and face down
+                }
+            ]
+        });
+
+        // Update the doughnut chart UI
+        if (doughnutRef.current) {
+            doughnutRef.current.update();
         }
     };
 
@@ -187,6 +214,7 @@ const TeamAnalytics = () => {
         }
     };
 
+    // Generate PDP Radar data
     const generatePdpData = () => {
         const pdpLabels = ['Leadership', 'Communication', 'Problem Solving', 'Teamwork', 'Adaptability'];
         const pdpScores = pdpLabels.map(() => Math.floor(Math.random() * 10) + 1);
@@ -205,47 +233,27 @@ const TeamAnalytics = () => {
         });
     };
 
-    const generateProgressData = () => {
-        const progress = 70;
-        setProgressData({
-            labels: ['Progress', 'Remaining'],
-            datasets: [
-                {
-                    data: [progress, 100 - progress],
-                    backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(192, 192, 192, 0.6)'],
-                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(192, 192, 192, 1)'],
-                    borderWidth: 1,
-                },
-            ],
-        });
-    };
-
-    const handleDateRangeChange = (range) => {
-        setDateRanges({ start: range[0], end: range[1] });
-        fetchSnippets();
-    };
-
     return (
         <div className="team-analytics-page">
             {/* Overall Progress Half-circle Doughnut */}
             <div className="overall-progress">
                 <h2 className="page-title">Team Analytics Dashboard</h2>
                 <div className="half-doughnut-container">
-                    <Doughnut 
-                        data={progressData} 
-                        options={{ 
-                            responsive: true, 
-                            maintainAspectRatio: false, 
+                    <Doughnut
+                        ref={doughnutRef}
+                        data={progressData}
+                        options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: false }
+                                legend: { display: false } // Hide legend for a clean look
                             }
-                        }} 
+                        }}
                     />
                 </div>
             </div>
 
-            {/* Dropdowns */}
-            <div className="dropdown-row">
+            <div className="dropdown-container">
                 <select value={selectedTimePeriod} onChange={(e) => setSelectedTimePeriod(e.target.value)}>
                     <option value="Last week">Last week</option>
                     <option value="Last month">Last month</option>
