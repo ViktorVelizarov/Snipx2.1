@@ -8,45 +8,56 @@ const SkillsMatrix = () => {
     const [users, setUsers] = useState([]);
     const [teams, setTeams] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
-    const [selectedFilter, setSelectedFilter] = useState('Employees'); // Default to Employees
-    const [skills, setSkills] = useState([
-        { id: 1, title: 'Management' },
-        { id: 2, title: 'Planning' },
-        { id: 3, title: 'Recruiting' },
-        { id: 4, title: 'Web Development' },
-        { id: 5, title: 'Excel Advanced' },
-        { id: 6, title: 'Presentation Skills' },
-        { id: 7, title: 'Safety Training' },
-    ]);
+    const [selectedFilter, setSelectedFilter] = useState('Employees');
+    const [skills, setSkills] = useState([]);
     const [userSkills, setUserSkills] = useState({});
     const [editingSkill, setEditingSkill] = useState(null);
+    const [newSkill, setNewSkill] = useState("");
+    const [companyId, setCompanyId] = useState(null);
 
+    
+    console.log("all skills:", skills);
+    console.log("skills data global: ", userSkills)
+    
     useEffect(() => {
-        fetchTeams();
-        fetchUsers();
+        if (user) {
+            fetchCompanyId(); // Fetch company ID when user is available
+            fetchTeams();
+            console.log("userID in useEffect", user.id)
+            
+        }
     }, [user]);
 
     useEffect(() => {
-        if (users.length > 0) {
-            generateRandomScores(); // Generate random scores after users are fetched
+        if (companyId) {
+            fetchSkills(); // Fetch skills only when companyId is available
+            fetchUsers();
+
         }
-    }, [users]);
+    }, [companyId]);
 
     useEffect(() => {
         filterUsers();
-    }, [selectedFilter]);
+    }, [selectedFilter, users, teams]);
+
+    const fetchCompanyId = async () => {
+        try {
+            const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${user.id}/company`, {
+                headers: { "Authorization": `Bearer ${user.token}` },
+            });
+            console.log("companyID in fetchCompanyID:", response.data.companyId)
+            setCompanyId(response.data.companyId);
+        } catch (error) {
+            console.error("Error fetching company ID:", error);
+        }
+    };
 
     const fetchTeams = async () => {
         try {
-            const response = await fetch(`https://extension-360407.lm.r.appspot.com/api/teams?userId=${user.id}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user.token}`,
-                },
+            const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/teams?userId=${user.id}`, {
+                headers: { "Authorization": `Bearer ${user.token}` },
             });
-            const data = await response.json();
-            setTeams(data);
+            setTeams(response.data);
         } catch (error) {
             console.error("Error fetching teams:", error);
         }
@@ -54,60 +65,120 @@ const SkillsMatrix = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await fetch("https://extension-360407.lm.r.appspot.com/api/company_users", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(user),
-            });
-            const data = await response.json();
-            setUsers(data);
+            const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_users", user);
+            setUsers(response.data);
+            // Fetch user skills once users are loaded
+            fetchUserSkills(response.data.map(user => user.id));
         } catch (error) {
             console.error("Error fetching users:", error);
         }
     };
 
-    const generateRandomScores = () => {
-        const newUserSkills = {};
-        users.forEach((user) => {
-            newUserSkills[user.id] = {};
-            skills.forEach((skill) => {
-                newUserSkills[user.id][skill.id] = Math.floor(Math.random() * 5) + 1; // Random number between 1 and 5
+    const fetchSkills = async () => {
+        console.log("companyID in fetchSkills:", companyId)
+        if (!companyId) return;
+        try {
+            console.log("getting skills...")
+            const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/skills/${companyId}`, {
+                headers: { "Authorization": `Bearer ${user.token}`},
             });
-        });
-        setUserSkills(newUserSkills);
+            console.log("got skills")
+            setSkills(response.data);
+        } catch (error) {
+            console.error("Error fetching skills:", error);
+        }
+    };
+
+    const fetchUserSkills = async (userIds) => {
+        try {
+            const userSkillsResponse = await Promise.all(userIds.map(userId =>
+                axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`, {
+                    headers: { "Authorization": `Bearer ${user.token}` },
+                })
+            ));
+            const skillsData = userSkillsResponse.reduce((acc, { data }, idx) => {
+                acc[userIds[idx]] = data.reduce((skillAcc, rating) => {
+                    skillAcc[rating.skill.id] = rating.score;
+                    return skillAcc;
+                }, {});
+                return acc;
+            }, {});
+            console.log("userSkillsResponse: ", userSkillsResponse)
+            console.log("skills data: ", skillsData)
+            setUserSkills(skillsData);
+        } catch (error) {
+            console.error("Error fetching user skills:", error);
+        }
+    };
+
+    const handleAddSkill = async () => {
+        try {
+            const response = await axios.post(
+                "https://extension-360407.lm.r.appspot.com/api/skills",
+                { skillName: newSkill, companyId },
+                {
+                    headers: { "Authorization": `Bearer ${user.token}` },
+                }
+            );
+            const addedSkill = response.data;
+            setSkills([...skills, addedSkill]);
+            setNewSkill(""); // Clear input after adding
+        } catch (error) {
+            console.error("Error adding skill:", error);
+        }
+    };
+
+    const handleSkillEdit = async (skillId, newTitle) => {
+        try {
+            await axios.put(
+                `https://extension-360407.lm.r.appspot.com/api/skills/${skillId}`,
+                { skillName: newTitle },
+                {
+                    headers: { "Authorization": `Bearer ${user.token}` },
+                }
+            );
+            setSkills((prevSkills) =>
+                prevSkills.map((skill) =>
+                    skill.id === skillId ? { ...skill, title: newTitle } : skill
+                )
+            );
+        } catch (error) {
+            console.error("Error updating skill:", error);
+        }
+    };
+
+    const handleUserSkillChange = async (userId, skillId, newScore) => {
+        try {
+            await axios.post(
+                `https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`,
+                { skillId, score: parseInt(newScore) },
+                {
+                    headers: { "Authorization": `Bearer ${user.token}` },
+                }
+            );
+            setUserSkills((prevSkills) => ({
+                ...prevSkills,
+                [userId]: {
+                    ...prevSkills[userId],
+                    [skillId]: newScore,
+                },
+            }));
+        } catch (error) {
+            console.error("Error updating user skill:", error);
+        }
     };
 
     const filterUsers = () => {
         if (selectedFilter === 'Employees') {
-            setFilteredUsers(users); // Show all employees if "Employees" is selected
+            setFilteredUsers(users);
         } else {
             const team = teams.find(team => team.team_name === selectedFilter);
             if (team && team.teamMembers) {
                 setFilteredUsers(users.filter(user => team.teamMembers.some(member => member.user_id === user.id)));
             } else {
-                setFilteredUsers([]); // If no team found, show no users
+                setFilteredUsers([]);
             }
         }
-    };
-
-    const handleSkillEdit = (skillId, newTitle) => {
-        setSkills((prevSkills) =>
-            prevSkills.map((skill) =>
-                skill.id === skillId ? { ...skill, title: newTitle } : skill
-            )
-        );
-    };
-
-    const handleUserSkillChange = (userId, skillId, newScore) => {
-        setUserSkills((prevSkills) => ({
-            ...prevSkills,
-            [userId]: {
-                ...prevSkills[userId],
-                [skillId]: newScore,
-            },
-        }));
     };
 
     const calculateTotal = (skillId) => {
@@ -126,19 +197,14 @@ const SkillsMatrix = () => {
     const getCellBackgroundColor = (value) => {
         switch (value) {
             case '1':
-            case 1:
                 return '#FF4B55';  // Red
             case '2':
-            case 2:
                 return '#45B77D';  // Green
             case '3':
-            case 3:
                 return '#F98404';  // Orange
             case '4':
-            case 4:
                 return '#9046CF';  // Purple
             case '5':
-            case 5:
                 return '#d637bf';  // Pink
             default:
                 return 'white'; // default background color
@@ -169,7 +235,7 @@ const SkillsMatrix = () => {
                                 {editingSkill === skill.id ? (
                                     <input
                                         type="text"
-                                        value={skill.title}
+                                        value={skill.skill_name}
                                         onChange={(e) => handleSkillEdit(skill.id, e.target.value)}
                                         onBlur={() => setEditingSkill(null)}
                                     />
@@ -178,7 +244,7 @@ const SkillsMatrix = () => {
                                         onClick={() => setEditingSkill(skill.id)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        {skill.title}
+                                        {skill.skill_name}
                                     </span>
                                 )}
                             </th>
@@ -231,7 +297,18 @@ const SkillsMatrix = () => {
                 </tbody>
             </table>
 
-            {/* Captions */}
+            {/* Button to add a new skill */}
+            <div>
+                <input
+                    type="text"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    placeholder="Add new skill"
+                />
+                <button onClick={handleAddSkill}>Add Skill</button>
+            </div>
+
+            {/* Skill Level Captions */}
             <div className="skills-matrix-captions">
                 <div>
                     <span style={{ backgroundColor: '#FF4B55' }} className="caption-color"></span>
@@ -254,7 +331,6 @@ const SkillsMatrix = () => {
                     <span>5 - Can Coach</span>
                 </div>
             </div>
-            
         </div>
     );
 };
