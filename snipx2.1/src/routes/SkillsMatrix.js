@@ -96,20 +96,26 @@ const SkillsMatrix = () => {
                     headers: { "Authorization": `Bearer ${user.token}` },
                 })
             ));
+            
             const skillsData = userSkillsResponse.reduce((acc, { data }, idx) => {
                 acc[userIds[idx]] = data.reduce((skillAcc, rating) => {
-                    skillAcc[rating.skill.id] = rating.score;
+                    // Change from rating.skill.id to rating.skill.skill_name
+                    if (rating.skill && rating.skill.id) {
+                        skillAcc[rating.skill.id] = rating.score;
+                    }
                     return skillAcc;
                 }, {});
                 return acc;
             }, {});
-            console.log("userSkillsResponse: ", userSkillsResponse)
-            console.log("skills data: ", skillsData)
+    
+            console.log("userSkillsResponse: ", userSkillsResponse);
+            console.log("skills data: ", skillsData);
             setUserSkills(skillsData);
         } catch (error) {
             console.error("Error fetching user skills:", error);
         }
     };
+    
 
     const handleAddSkill = async () => {
         try {
@@ -144,6 +150,17 @@ const SkillsMatrix = () => {
             );
         } catch (error) {
             console.error("Error updating skill:", error);
+        }
+    };
+
+    const handleDeleteSkill = async (skillId) => {
+        try {
+            await axios.delete(`https://extension-360407.lm.r.appspot.com/api/skills/${skillId}`, {
+                headers: { "Authorization": `Bearer ${user.token}` },
+            });
+            setSkills(skills.filter(skill => skill.id !== skillId));
+        } catch (error) {
+            console.error("Error deleting skill:", error);
         }
     };
 
@@ -247,6 +264,12 @@ const SkillsMatrix = () => {
                                         {skill.skill_name}
                                     </span>
                                 )}
+                                 <button
+                                    onClick={() => handleDeleteSkill(skill.id)}
+                                    style={{ marginLeft: '10px', cursor: 'pointer', backgroundColor: 'red', color: 'white' }}
+                                >
+                                    Delete
+                                </button>
                             </th>
                         ))}
                     </tr>
