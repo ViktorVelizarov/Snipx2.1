@@ -12,27 +12,20 @@ const SkillsMatrix = () => {
     const [skills, setSkills] = useState([]);
     const [userSkills, setUserSkills] = useState({});
     const [editingSkill, setEditingSkill] = useState(null);
-    const [newSkill, setNewSkill] = useState("");
+    const [newSkill, setNewSkill] = useState({ skill_name: "", descriptions: [""] });
     const [companyId, setCompanyId] = useState(null);
 
-    
-    console.log("all skills:", skills);
-    console.log("skills data global: ", userSkills)
-    
     useEffect(() => {
         if (user) {
-            fetchCompanyId(); // Fetch company ID when user is available
+            fetchCompanyId();
             fetchTeams();
-            console.log("userID in useEffect", user.id)
-            
         }
     }, [user]);
 
     useEffect(() => {
         if (companyId) {
-            fetchSkills(); // Fetch skills only when companyId is available
+            fetchSkills();
             fetchUsers();
-
         }
     }, [companyId]);
 
@@ -45,7 +38,6 @@ const SkillsMatrix = () => {
             const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${user.id}/company`, {
                 headers: { "Authorization": `Bearer ${user.token}` },
             });
-            console.log("companyID in fetchCompanyID:", response.data.companyId)
             setCompanyId(response.data.companyId);
         } catch (error) {
             console.error("Error fetching company ID:", error);
@@ -67,7 +59,6 @@ const SkillsMatrix = () => {
         try {
             const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_users", user);
             setUsers(response.data);
-            // Fetch user skills once users are loaded
             fetchUserSkills(response.data.map(user => user.id));
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -75,14 +66,12 @@ const SkillsMatrix = () => {
     };
 
     const fetchSkills = async () => {
-        console.log("companyID in fetchSkills:", companyId)
         if (!companyId) return;
         try {
-            console.log("getting skills...")
             const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/skills/${companyId}`, {
                 headers: { "Authorization": `Bearer ${user.token}`},
             });
-            console.log("got skills")
+            console.log("skills fetched:", response.data)
             setSkills(response.data);
         } catch (error) {
             console.error("Error fetching skills:", error);
@@ -99,7 +88,6 @@ const SkillsMatrix = () => {
             
             const skillsData = userSkillsResponse.reduce((acc, { data }, idx) => {
                 acc[userIds[idx]] = data.reduce((skillAcc, rating) => {
-                    // Change from rating.skill.id to rating.skill.skill_name
                     if (rating.skill && rating.skill.id) {
                         skillAcc[rating.skill.id] = rating.score;
                     }
@@ -108,27 +96,32 @@ const SkillsMatrix = () => {
                 return acc;
             }, {});
     
-            console.log("userSkillsResponse: ", userSkillsResponse);
-            console.log("skills data: ", skillsData);
             setUserSkills(skillsData);
         } catch (error) {
             console.error("Error fetching user skills:", error);
         }
     };
-    
+
+    const handleNewSkillDescriptionChange = (index, value) => {
+        setNewSkill((prev) => {
+            const newDescriptions = [...prev.descriptions];
+            newDescriptions[index] = value;
+            return { ...prev, descriptions: newDescriptions };
+        });
+    };
 
     const handleAddSkill = async () => {
         try {
             const response = await axios.post(
                 "https://extension-360407.lm.r.appspot.com/api/skills",
-                { skillName: newSkill, companyId },
+                { ...newSkill, companyId },
                 {
                     headers: { "Authorization": `Bearer ${user.token}` },
                 }
             );
             const addedSkill = response.data;
             setSkills([...skills, addedSkill]);
-            setNewSkill(""); // Clear input after adding
+            setNewSkill({ skill_name: "", descriptions: [""] });
         } catch (error) {
             console.error("Error adding skill:", error);
         }
@@ -145,11 +138,39 @@ const SkillsMatrix = () => {
             );
             setSkills((prevSkills) =>
                 prevSkills.map((skill) =>
-                    skill.id === skillId ? { ...skill, title: newTitle } : skill
+                    skill.id === skillId ? { ...skill, skill_name: newTitle } : skill
                 )
             );
         } catch (error) {
             console.error("Error updating skill:", error);
+        }
+    };
+
+    const handleSkillDescriptionEdit = async (skillId, descIndex, newDescription) => {
+        try {
+            const skillToUpdate = skills.find(skill => skill.id === skillId);
+            if (skillToUpdate) {
+                const updatedDescriptions = [...skillToUpdate.descriptions];
+                updatedDescriptions[descIndex] = newDescription;
+
+                await axios.put(
+                    `https://extension-360407.lm.r.appspot.com/api/skills/${skillId}`,
+                    { descriptions: updatedDescriptions },
+                    {
+                        headers: { "Authorization": `Bearer ${user.token}` },
+                    }
+                );
+
+                setSkills((prevSkills) =>
+                    prevSkills.map((skill) =>
+                        skill.id === skillId
+                            ? { ...skill, descriptions: updatedDescriptions }
+                            : skill
+                    )
+                );
+            }
+        } catch (error) {
+            console.error("Error updating skill descriptions:", error);
         }
     };
 
@@ -248,30 +269,32 @@ const SkillsMatrix = () => {
                             </select>
                         </th>
                         {skills.map((skill) => (
-                            <th key={skill.id} style={{ backgroundColor: '#007BFF', color: 'white' }}>
-                                {editingSkill === skill.id ? (
-                                    <input
-                                        type="text"
-                                        value={skill.skill_name}
-                                        onChange={(e) => handleSkillEdit(skill.id, e.target.value)}
-                                        onBlur={() => setEditingSkill(null)}
-                                    />
-                                ) : (
-                                    <span
-                                        onClick={() => setEditingSkill(skill.id)}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        {skill.skill_name}
-                                    </span>
-                                )}
-                                 <button
-                                    onClick={() => handleDeleteSkill(skill.id)}
-                                    style={{ marginLeft: '10px', cursor: 'pointer', backgroundColor: 'red', color: 'white' }}
-                                >
-                                    Delete
-                                </button>
-                            </th>
-                        ))}
+    <th key={skill.id} style={{ backgroundColor: '#007BFF', color: 'white' }}>
+        {editingSkill === skill.id ? (
+            <input
+                type="text"
+                value={skill.skill_name}
+                onChange={(e) => handleSkillEdit(skill.id, e.target.value)}
+                onBlur={() => setEditingSkill(null)}
+            />
+        ) : (
+            <span
+                onClick={() => setEditingSkill(skill.id)}
+                style={{ cursor: 'pointer' }}
+                title={(Object.keys(skill).filter(key => key.startsWith('desc')).map(key => skill[key]) ?? []).join(', ')}
+            >
+                {skill.skill_name}
+            </span>
+        )}
+        <button
+            onClick={() => handleDeleteSkill(skill.id)}
+            style={{ marginLeft: '10px', cursor: 'pointer', backgroundColor: 'red', color: 'white' }}
+        >
+            Delete
+        </button>
+    </th>
+))}
+
                     </tr>
                 </thead>
                 <tbody>
@@ -299,60 +322,46 @@ const SkillsMatrix = () => {
                             ))}
                         </tr>
                     ))}
-                    {/* Total row */}
                     <tr>
-                        <td><strong>Total</strong></td>
+                        <td>Total</td>
                         {skills.map((skill) => (
-                            <td key={skill.id}>
-                                <strong>{calculateTotal(skill.id)}</strong>
-                            </td>
+                            <td key={skill.id}>{calculateTotal(skill.id)}</td>
                         ))}
                     </tr>
-                    {/* Average row */}
                     <tr>
-                        <td><strong>Average</strong></td>
+                        <td>Average</td>
                         {skills.map((skill) => (
-                            <td key={skill.id}>
-                                <strong>{calculateAverage(skill.id)}</strong>
-                            </td>
+                            <td key={skill.id}>{calculateAverage(skill.id)}</td>
                         ))}
                     </tr>
                 </tbody>
             </table>
 
-            {/* Button to add a new skill */}
             <div>
                 <input
                     type="text"
-                    value={newSkill}
-                    onChange={(e) => setNewSkill(e.target.value)}
+                    value={newSkill.skill_name}
+                    onChange={(e) => setNewSkill((prev) => ({ ...prev, skill_name: e.target.value }))}
                     placeholder="Add new skill"
                 />
+                {newSkill.descriptions.map((desc, index) => (
+                    <input
+                        key={index}
+                        type="text"
+                        value={desc}
+                        onChange={(e) => handleNewSkillDescriptionChange(index, e.target.value)}
+                        placeholder={`Description ${index + 1}`}
+                    />
+                ))}
                 <button onClick={handleAddSkill}>Add Skill</button>
             </div>
 
-            {/* Skill Level Captions */}
-            <div className="skills-matrix-captions">
-                <div>
-                    <span style={{ backgroundColor: '#FF4B55' }} className="caption-color"></span>
-                    <span>1 - Training Required</span>
-                </div>
-                <div>
-                    <span style={{ backgroundColor: '#45B77D' }} className="caption-color"></span>
-                    <span>2 - Currently Trained</span>
-                </div>
-                <div>
-                    <span style={{ backgroundColor: '#F98404' }} className="caption-color"></span>
-                    <span>3 - Basic Complete</span>
-                </div>
-                <div>
-                    <span style={{ backgroundColor: '#9046CF' }} className="caption-color"></span>
-                    <span>4 - Skilled Enough</span>
-                </div>
-                <div>
-                    <span style={{ backgroundColor: '#d637bf' }} className="caption-color"></span>
-                    <span>5 - Can Coach</span>
-                </div>
+            <div className="skill-level-captions">
+                <p><span style={{ color: '#FF4B55' }}>●</span> Low Skill (1)</p>
+                <p><span style={{ color: '#45B77D' }}>●</span> Competent (2)</p>
+                <p><span style={{ color: '#F98404' }}>●</span> Experienced (3)</p>
+                <p><span style={{ color: '#9046CF' }}>●</span> Expert (4)</p>
+                <p><span style={{ color: '#d637bf' }}>●</span> Master (5)</p>
             </div>
         </div>
     );
