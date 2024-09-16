@@ -26,6 +26,10 @@
   .skills-matrix-table th {
     color: white;
   }
+
+  .skills-matrix-table span:hover {
+    color: #E4277D !important;
+  }
   
   .skills-matrix-table input[type="number"] {
     width: 50px;
@@ -52,3 +56,39 @@
     border-radius: 5px;
   }
   
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.75);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+}
+
+.trash-can {
+  background: none !important; /* Remove any background */
+  border: none !important; /* Remove border */
+  padding: 0 !important; /* Remove padding */
+  box-shadow: none !important; /* Remove box shadow */
+  cursor: pointer; /* Set cursor to pointer */
+}
+
+.trash-can:hover {
+  background: none; /* Ensure background stays transparent on hover */
+}
+
+.trash-can svg {
+  fill: currentColor; /* Ensures the icon color uses the text color */
+}
+

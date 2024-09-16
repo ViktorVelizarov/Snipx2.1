@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from "../AuthProvider";
 import './SkillsMatrix.css';
+import Modal from 'react-modal';
+import { FaTrashAlt } from "react-icons/fa";
 
 const SkillsMatrix = () => {
     const { user } = useAuth();
@@ -12,8 +14,11 @@ const SkillsMatrix = () => {
     const [skills, setSkills] = useState([]);
     const [userSkills, setUserSkills] = useState({});
     const [editingSkill, setEditingSkill] = useState(null);
-    const [newSkill, setNewSkill] = useState({ skill_name: "", descriptions: [""] });
+    const [newSkill, setNewSkill] = useState({ skill_name: "", descriptions: ["", "", "", "", ""] });
     const [companyId, setCompanyId] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalSkillDescriptions, setModalSkillDescriptions] = useState(["", "", "", "", ""]);
+    const [modalSkillName, setModalSkillName] = useState("");
 
     useEffect(() => {
         if (user) {
@@ -69,9 +74,9 @@ const SkillsMatrix = () => {
         if (!companyId) return;
         try {
             const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/skills/${companyId}`, {
-                headers: { "Authorization": `Bearer ${user.token}`},
+                headers: { "Authorization": `Bearer ${user.token}` },
             });
-            console.log("skills fetched:", response.data)
+            console.log("skills fetched:", response.data);
             setSkills(response.data);
         } catch (error) {
             console.error("Error fetching skills:", error);
@@ -89,13 +94,14 @@ const SkillsMatrix = () => {
             const skillsData = userSkillsResponse.reduce((acc, { data }, idx) => {
                 acc[userIds[idx]] = data.reduce((skillAcc, rating) => {
                     if (rating.skill && rating.skill.id) {
-                        skillAcc[rating.skill.id] = rating.score;
+                        // Ensure score is a number
+                        skillAcc[rating.skill.id] = parseInt(rating.score, 10);
                     }
                     return skillAcc;
                 }, {});
                 return acc;
             }, {});
-    
+
             setUserSkills(skillsData);
         } catch (error) {
             console.error("Error fetching user skills:", error);
@@ -112,63 +118,46 @@ const SkillsMatrix = () => {
 
     const handleAddSkill = async () => {
         try {
+            const { skill_name, descriptions } = newSkill;
             const response = await axios.post(
                 "https://extension-360407.lm.r.appspot.com/api/skills",
-                { ...newSkill, companyId },
+                { skillName: skill_name, companyId, desc1: descriptions[0], desc2: descriptions[1], desc3: descriptions[2], desc4: descriptions[3], desc5: descriptions[4] },
                 {
                     headers: { "Authorization": `Bearer ${user.token}` },
                 }
             );
             const addedSkill = response.data;
             setSkills([...skills, addedSkill]);
-            setNewSkill({ skill_name: "", descriptions: [""] });
+            setNewSkill({ skill_name: "", descriptions: ["", "", "", "", ""] });
         } catch (error) {
             console.error("Error adding skill:", error);
         }
     };
 
-    const handleSkillEdit = async (skillId, newTitle) => {
+    const handleOpenModal = (skill) => {
+        setModalSkillName(skill.skill_name);
+        setModalSkillDescriptions([skill.desc1, skill.desc2, skill.desc3, skill.desc4, skill.desc5]);
+        setEditingSkill(skill.id);
+        setIsModalOpen(true);
+    };
+
+    const handleSaveSkillDescriptions = async () => {
         try {
             await axios.put(
-                `https://extension-360407.lm.r.appspot.com/api/skills/${skillId}`,
-                { skillName: newTitle },
+                `https://extension-360407.lm.r.appspot.com/api/skills/${editingSkill}`,
+                { skillName: modalSkillName, desc1: modalSkillDescriptions[0], desc2: modalSkillDescriptions[1], desc3: modalSkillDescriptions[2], desc4: modalSkillDescriptions[3], desc5: modalSkillDescriptions[4] },
                 {
                     headers: { "Authorization": `Bearer ${user.token}` },
                 }
             );
             setSkills((prevSkills) =>
                 prevSkills.map((skill) =>
-                    skill.id === skillId ? { ...skill, skill_name: newTitle } : skill
+                    skill.id === editingSkill
+                        ? { ...skill, skill_name: modalSkillName, desc1: modalSkillDescriptions[0], desc2: modalSkillDescriptions[1], desc3: modalSkillDescriptions[2], desc4: modalSkillDescriptions[3], desc5: modalSkillDescriptions[4] }
+                        : skill
                 )
             );
-        } catch (error) {
-            console.error("Error updating skill:", error);
-        }
-    };
-
-    const handleSkillDescriptionEdit = async (skillId, descIndex, newDescription) => {
-        try {
-            const skillToUpdate = skills.find(skill => skill.id === skillId);
-            if (skillToUpdate) {
-                const updatedDescriptions = [...skillToUpdate.descriptions];
-                updatedDescriptions[descIndex] = newDescription;
-
-                await axios.put(
-                    `https://extension-360407.lm.r.appspot.com/api/skills/${skillId}`,
-                    { descriptions: updatedDescriptions },
-                    {
-                        headers: { "Authorization": `Bearer ${user.token}` },
-                    }
-                );
-
-                setSkills((prevSkills) =>
-                    prevSkills.map((skill) =>
-                        skill.id === skillId
-                            ? { ...skill, descriptions: updatedDescriptions }
-                            : skill
-                    )
-                );
-            }
+            setIsModalOpen(false);
         } catch (error) {
             console.error("Error updating skill descriptions:", error);
         }
@@ -189,7 +178,7 @@ const SkillsMatrix = () => {
         try {
             await axios.post(
                 `https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`,
-                { skillId, score: parseInt(newScore) },
+                { skillId, score: parseInt(newScore, 10) },
                 {
                     headers: { "Authorization": `Bearer ${user.token}` },
                 }
@@ -198,7 +187,7 @@ const SkillsMatrix = () => {
                 ...prevSkills,
                 [userId]: {
                     ...prevSkills[userId],
-                    [skillId]: newScore,
+                    [skillId]: parseInt(newScore, 10),
                 },
             }));
         } catch (error) {
@@ -233,16 +222,17 @@ const SkillsMatrix = () => {
     };
 
     const getCellBackgroundColor = (value) => {
+        // Ensure value is a number
         switch (value) {
-            case '1':
+            case 1:
                 return '#FF4B55';  // Red
-            case '2':
+            case 2:
                 return '#45B77D';  // Green
-            case '3':
+            case 3:
                 return '#F98404';  // Orange
-            case '4':
+            case 4:
                 return '#9046CF';  // Purple
-            case '5':
+            case 5:
                 return '#d637bf';  // Pink
             default:
                 return 'white'; // default background color
@@ -269,32 +259,20 @@ const SkillsMatrix = () => {
                             </select>
                         </th>
                         {skills.map((skill) => (
-    <th key={skill.id} style={{ backgroundColor: '#007BFF', color: 'white' }}>
-        {editingSkill === skill.id ? (
-            <input
-                type="text"
-                value={skill.skill_name}
-                onChange={(e) => handleSkillEdit(skill.id, e.target.value)}
-                onBlur={() => setEditingSkill(null)}
-            />
-        ) : (
-            <span
-                onClick={() => setEditingSkill(skill.id)}
-                style={{ cursor: 'pointer' }}
-                title={(Object.keys(skill).filter(key => key.startsWith('desc')).map(key => skill[key]) ?? []).join(', ')}
-            >
-                {skill.skill_name}
-            </span>
-        )}
-        <button
-            onClick={() => handleDeleteSkill(skill.id)}
-            style={{ marginLeft: '10px', cursor: 'pointer', backgroundColor: 'red', color: 'white' }}
-        >
-            Delete
-        </button>
-    </th>
-))}
-
+                            <th key={skill.id} style={{ backgroundColor: '#007BFF', color: 'white' }}>
+                                <span
+                                    onClick={() => handleOpenModal(skill)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    {skill.skill_name}
+                                </span>
+                                <button className='trash-can'
+                                    onClick={() => handleDeleteSkill(skill.id)}
+                                >
+                                    <FaTrashAlt />
+                                </button>
+                            </th>
+                        ))}
                     </tr>
                 </thead>
                 <tbody>
@@ -336,6 +314,60 @@ const SkillsMatrix = () => {
                     </tr>
                 </tbody>
             </table>
+
+            {/* Modal for skill descriptions */}
+            <Modal
+                isOpen={isModalOpen}
+                onRequestClose={() => setIsModalOpen(false)}
+                contentLabel="Skill Descriptions Modal"
+                style={{
+                    content: {
+                        top: '50%',
+                        left: '50%',
+                        right: 'auto',
+                        bottom: 'auto',
+                        transform: 'translate(-50%, -50%)',
+                        width: '440px',
+                        height: 'auto',
+                        padding: '20px',
+                        overflow: 'auto',
+                    },
+                    overlay: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.75)' // Darken background
+                    }
+                }}
+            >
+                <h2>Edit Skill Descriptions</h2>
+                <div>
+                    <label>Skill Name</label>
+                    <input
+                        type="text"
+                        value={modalSkillName}
+                        style={{
+                            width: '95%'
+                        }}
+                        onChange={(e) => setModalSkillName(e.target.value)}
+                    />
+                </div>
+                {modalSkillDescriptions.map((desc, index) => (
+                    <div key={index}>
+                        <label>{`Description ${index + 1}`}</label>
+                        <input
+                            type="text"
+                            value={desc}
+                            style={{
+                                width: '95%'
+                            }}
+                            onChange={(e) => {
+                                const updatedDescriptions = [...modalSkillDescriptions];
+                                updatedDescriptions[index] = e.target.value;
+                                setModalSkillDescriptions(updatedDescriptions);
+                            }}
+                        />
+                    </div>
+                ))}
+                <button onClick={handleSaveSkillDescriptions}>Save</button>
+            </Modal>
 
             <div>
                 <input
