@@ -20,6 +20,11 @@ const SkillsMatrix = () => {
     const [modalSkillDescriptions, setModalSkillDescriptions] = useState(["", "", "", "", ""]);
     const [modalSkillName, setModalSkillName] = useState("");
 
+    // State for filters
+    const [selectedSkills, setSelectedSkills] = useState([]);
+    const [selectedScores, setSelectedScores] = useState([1, 2, 3, 4, 5]);
+    const [skillSearchTerm, setSkillSearchTerm] = useState(''); // State for skill search
+
     useEffect(() => {
         if (user) {
             fetchCompanyId();
@@ -94,7 +99,6 @@ const SkillsMatrix = () => {
             const skillsData = userSkillsResponse.reduce((acc, { data }, idx) => {
                 acc[userIds[idx]] = data.reduce((skillAcc, rating) => {
                     if (rating.skill && rating.skill.id) {
-                        // Ensure score is a number
                         skillAcc[rating.skill.id] = parseInt(rating.score, 10);
                     }
                     return skillAcc;
@@ -198,6 +202,8 @@ const SkillsMatrix = () => {
     const filterUsers = () => {
         if (selectedFilter === 'Employees') {
             setFilteredUsers(users);
+        } else if (selectedFilter === 'Groups') {
+            setFilteredUsers([]); // Clear filtered users for "Groups" option
         } else {
             const team = teams.find(team => team.team_name === selectedFilter);
             if (team && team.teamMembers) {
@@ -209,20 +215,43 @@ const SkillsMatrix = () => {
     };
 
     const calculateTotal = (skillId) => {
+        if (selectedFilter === 'Groups') {
+            return teams.reduce((teamTotal, team) => {
+                const teamUsers = users.filter(user => team.teamMembers.some(member => member.user_id === user.id));
+                const teamScore = teamUsers.reduce((userTotal, user) => {
+                    return userTotal + parseInt(userSkills[user.id]?.[skillId] || 0, 10);
+                }, 0);
+                return teamTotal + teamScore;
+            }, 0);
+        }
+
         let total = 0;
-        filteredUsers.forEach((user) => {
-            total += parseInt(userSkills[user.id]?.[skillId] || 0, 10);
-        });
+        // Filter the users based on visibility
+        filteredUsers
+            .filter(isUserVisible)
+            .forEach((user) => {
+                // Sum the scores of the visible users for the given skill
+                total += parseInt(userSkills[user.id]?.[skillId] || 0, 10);
+            });
         return total;
     };
 
     const calculateAverage = (skillId) => {
+        if (selectedFilter === 'Groups') {
+            const totalTeams = teams.length;
+            const totalScore = calculateTotal(skillId);
+            return totalTeams ? (totalScore / totalTeams).toFixed(1) : 0;
+        }
+
+        // Get the list of users that are visible
+        const selectedUsers = filteredUsers.filter(isUserVisible);
+        // Calculate the total score for the visible users
         const total = calculateTotal(skillId);
-        return (total / filteredUsers.length).toFixed(1);
+        // Calculate the average by dividing the total by the number of visible users
+        return selectedUsers.length ? (total / selectedUsers.length).toFixed(1) : 0;
     };
 
     const getCellBackgroundColor = (value) => {
-        // Ensure value is a number
         switch (value) {
             case 1:
                 return '#FF4B55';  // Red
@@ -239,9 +268,118 @@ const SkillsMatrix = () => {
         }
     };
 
+    // Apply filters
+    const isUserVisible = (user) => {
+        // If "Groups" is selected, we don't show individual users
+        if (selectedFilter === 'Groups') return false;
+
+        // Get the skills and scores of the user for the selected skills
+        const userSkillScores = Object.keys(userSkills[user.id] || {})
+            .filter(skillId => selectedSkills.includes(parseInt(skillId, 10)))
+            .map(skillId => userSkills[user.id][skillId]);
+
+        // Check if the user's scores on the selected skills match the selected scores
+        return userSkillScores.length && userSkillScores.every(score => selectedScores.includes(score));
+    };
+
+    const isSkillVisible = (skill) => {
+        if (selectedSkills.length && !selectedSkills.includes(skill.id)) {
+            return false;
+        }
+        return true;
+    };
+
+    // Filter skills based on the search term
+    const filteredSkills = skills.filter(skill => 
+        skill.skill_name.toLowerCase().includes(skillSearchTerm.toLowerCase())
+    );
+
     return (
         <div className="skills-matrix-container">
             <h2 className="page-title">Skills Matrix</h2>
+
+            {/* Filters Section */}
+            <div className="filters-section">
+                <div className="filters-row">
+                    <div style={{ display: 'flex', gap: '30px', flexDirection:'row' }}>
+                        <div className='selection-column'>
+                            <label>Filter Skills:</label>
+                            <input
+                                type="text"
+                                placeholder="Search skills..."
+                                value={skillSearchTerm}
+                                onChange={(e) => setSkillSearchTerm(e.target.value)}
+                                style={{ marginBottom: '10px', width: '100%' }}
+                            />
+                        </div>
+                        {/* Custom Multi-Select for Skills */}
+                        <div className="multi-select scrollable">
+                            {filteredSkills.map(skill => (
+                                <div
+                                    key={skill.id}
+                                    className={`multi-select-item ${selectedSkills.includes(skill.id) ? 'selected' : ''}`}
+                                    onClick={() => {
+                                        // Toggle selection
+                                        if (selectedSkills.includes(skill.id)) {
+                                            setSelectedSkills(selectedSkills.filter(id => id !== skill.id));
+                                        } else {
+                                            setSelectedSkills([...selectedSkills, skill.id]);
+                                        }
+                                    }}
+                                >
+                                    {skill.skill_name}
+                                </div>
+                            ))}
+                        </div>
+                        {/* Clear and Select All Buttons for Skills */}
+                        <div style={{display:'flex',flexDirection:'column',marginTop:'0px'}}>
+                        <button
+                            onClick={() => setSelectedSkills([])}
+                            style={{ marginTop: '10px' }}
+                        >
+                            Clear All
+                        </button>
+                        <button
+                            onClick={() => setSelectedSkills(filteredSkills.map(skill => skill.id))}
+                            style={{ marginTop: '5px' }}
+                        >
+                            Select All
+                        </button>
+                        </div>
+                        
+                    </div>
+
+                    <div className='selection-column'>
+                        <label>Filter Scores:</label>
+                        {/* Custom Multi-Select for Scores */}
+                        <div className="multi-select">
+                            {[1, 2, 3, 4, 5].map(score => (
+                                <div
+                                    key={score}
+                                    className={`multi-select-item ${selectedScores.includes(score) ? 'selected' : ''}`}
+                                    onClick={() => {
+                                        // Toggle selection
+                                        if (selectedScores.includes(score)) {
+                                            setSelectedScores(selectedScores.filter(s => s !== score));
+                                        } else {
+                                            setSelectedScores([...selectedScores, score]);
+                                        }
+                                    }}
+                                >
+                                    {score}
+                                </div>
+                            ))}
+                        </div>
+                        {/* Clear Button for Scores */}
+                        <button
+                            onClick={() => setSelectedScores([])}
+                            style={{ marginTop: '10px' }}
+                        >
+                            Clear Scores
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <table className="skills-matrix-table">
                 <thead>
@@ -253,12 +391,13 @@ const SkillsMatrix = () => {
                                 className="team-dropdown"
                             >
                                 <option value="Employees">Employees</option>
+                                <option value="Groups">Groups</option>
                                 {teams.map(team => (
                                     <option key={team.id} value={team.team_name}>{team.team_name}</option>
                                 ))}
                             </select>
                         </th>
-                        {skills.map((skill) => (
+                        {skills.filter(isSkillVisible).map((skill) => (
                             <th key={skill.id} style={{ backgroundColor: '#007BFF', color: 'white' }}>
                                 <span
                                     onClick={() => handleOpenModal(skill)}
@@ -276,39 +415,63 @@ const SkillsMatrix = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredUsers.map((user) => (
-                        <tr key={user.id}>
-                            <td>{user.email}</td>
-                            {skills.map((skill) => (
-                                <td
-                                    key={skill.id}
-                                    style={{
-                                        backgroundColor: getCellBackgroundColor(userSkills[user.id]?.[skill.id]),
-                                    }}
-                                >
-                                    <input
-                                        type="number"
-                                        value={userSkills[user.id]?.[skill.id] || ''}
-                                        onChange={(e) =>
-                                            handleUserSkillChange(user.id, skill.id, e.target.value)
-                                        }
-                                        min="1"
-                                        max="5"
-                                        style={{ width: '50px', textAlign: 'center' }}
-                                    />
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
+                    {selectedFilter === 'Groups' ? (
+                        teams.map((team) => (
+                            <tr key={team.id}>
+                                <td>{team.team_name}</td>
+                                {skills.filter(isSkillVisible).map((skill) => {
+                                    const teamUsers = users.filter(user => team.teamMembers.some(member => member.user_id === user.id));
+                                    const totalScore = teamUsers.reduce((total, user) => {
+                                        return total + parseInt(userSkills[user.id]?.[skill.id] || 0, 10);
+                                    }, 0);
+                                    return (
+                                        <td
+                                            key={skill.id}
+                                            style={{
+                                                backgroundColor: getCellBackgroundColor(Math.round(totalScore / teamUsers.length)),
+                                            }}
+                                        >
+                                            {totalScore}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))
+                    ) : (
+                        filteredUsers.filter(isUserVisible).map((user) => (
+                            <tr key={user.id}>
+                                <td>{user.email}</td>
+                                {skills.filter(isSkillVisible).map((skill) => (
+                                    <td
+                                        key={skill.id}
+                                        style={{
+                                            backgroundColor: getCellBackgroundColor(userSkills[user.id]?.[skill.id]),
+                                        }}
+                                    >
+                                        <input
+                                            type="number"
+                                            value={userSkills[user.id]?.[skill.id] || ''}
+                                            onChange={(e) =>
+                                                handleUserSkillChange(user.id, skill.id, e.target.value)
+                                            }
+                                            min="1"
+                                            max="5"
+                                            style={{ width: '50px', textAlign: 'center' }}
+                                        />
+                                    </td>
+                                ))}
+                            </tr>
+                        ))
+                    )}
                     <tr>
                         <td>Total</td>
-                        {skills.map((skill) => (
+                        {skills.filter(isSkillVisible).map((skill) => (
                             <td key={skill.id}>{calculateTotal(skill.id)}</td>
                         ))}
                     </tr>
                     <tr>
                         <td>Average</td>
-                        {skills.map((skill) => (
+                        {skills.filter(isSkillVisible).map((skill) => (
                             <td key={skill.id}>{calculateAverage(skill.id)}</td>
                         ))}
                     </tr>
