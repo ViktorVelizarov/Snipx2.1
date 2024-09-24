@@ -45,3 +45,33 @@
     background-color: #ccc;
   }
   
+  .assign-users-section {
+    margin-top: 20px;
+  }
+  
+  .assign-users-button {
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  /* Style the select dropdown to make text visible */
+  select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+    background-color: white;
+    color: #333; /* Set the text color for the dropdown */
+    border: 1px solid #ddd;
+  }
+  
+  option {
+    background-color: white;
+    color: #333; /* Ensure option text is visible */
+  }
+  

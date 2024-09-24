@@ -7,10 +7,15 @@ const TaskManagement = () => {
   const { user } = useAuth(); // Fetch the logged-in user's details
   const [companyId, setCompanyId] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [users, setUsers] = useState([]); // For storing users list
+  const [selectedUsers, setSelectedUsers] = useState([]); // For storing selected users to assign
+  const [selectedTaskId, setSelectedTaskId] = useState(null); // Task ID to which users will be assigned
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskType, setNewTaskType] = useState('');
   const [loading, setLoading] = useState(false);
+
+  console.log("users:", users)
 
   // Fetch the company ID of the logged-in user
   useEffect(() => {
@@ -46,6 +51,24 @@ const TaskManagement = () => {
     };
 
     fetchTasks();
+  }, [companyId, user]);
+
+  // Fetch all users in the company
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_users", user, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setUsers(response.data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+
+    if (companyId) {
+      fetchUsers();
+    }
   }, [companyId, user]);
 
   // Handle new task creation
@@ -86,6 +109,57 @@ const TaskManagement = () => {
     }
   };
 
+  // Handle task deletion
+  const deleteTask = async (taskId) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return;
+
+    try {
+      await axios.delete(`https://extension-360407.lm.r.appspot.com/api/tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      // Remove the deleted task from the state
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+      alert('Task deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('Failed to delete task.');
+    }
+  };
+
+  // Handle user selection for task assignment
+  const handleUserSelection = (userId) => {
+    setSelectedUsers((prevSelected) => {
+      if (prevSelected.includes(userId)) {
+        return prevSelected.filter((id) => id !== userId);
+      } else {
+        return [...prevSelected, userId];
+      }
+    });
+  };
+
+  // Handle assigning selected users to the selected task
+  const assignUsersToTask = async (taskId) => {
+    if (!selectedUsers.length) {
+      alert('No users selected.');
+      return;
+    }
+
+    try {
+      await axios.post(
+        'https://extension-360407.lm.r.appspot.com/api/tasks/assign-users',
+        { task_id: taskId, user_ids: selectedUsers },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      alert('Users assigned successfully!');
+      setSelectedUsers([]);
+    } catch (error) {
+      console.error('Error assigning users to task:', error);
+      alert('Failed to assign users.');
+    }
+  };
+
   return (
     <div className="task-management-container">
       <h1 className="page-title">Manage Tasks</h1>
@@ -97,6 +171,20 @@ const TaskManagement = () => {
               <p>{task.task_description}</p>
               <p><strong>Type:</strong> {task.task_type}</p>
               <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
+              <button className="delete-task-button" onClick={() => deleteTask(task.id)}>Delete Task</button>
+              
+              {/* Assign users to this task */}
+              <div className="assign-users-section">
+                <h4>Assign Users to Task</h4>
+                <select multiple value={selectedUsers} onChange={(e) => handleUserSelection(e.target.value)}>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
+                </select>
+                <button className="assign-users-button" onClick={() => assignUsersToTask(task.id)}>
+                  Assign Selected Users
+                </button>
+              </div>
             </div>
           ))
         ) : (
