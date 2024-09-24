@@ -6,6 +6,7 @@ import MySnippets from "./routes/MySnippets";
 import UserPDP from "./routes/UserPDP";
 import LandingPage from "./routes/LandingPage";
 import WeeklyReport from "./routes/WeeklyReport";
+import TasksPage from "./routes/TasksPage";
 import NotAuthorized from "./routes/NotAuthorized";
 import Login from "./routes/Login";
 import NavBar from './routes/NavBar';
@@ -45,7 +46,7 @@ export const router = createBrowserRouter(
           <Route path="team-analytics" element={<TeamAnalytics />} />
           <Route path="skills-matrix" element={<SkillsMatrix />} />
         <Route element={<ProtectedLayout />}>
-          
+          <Route path="tasks" element={<TasksPage />} />
           <Route path="snippets" element={<Snippets />} />
           <Route path="users" element={<Users />} />
           <Route path="teams" element={<Teams />} />

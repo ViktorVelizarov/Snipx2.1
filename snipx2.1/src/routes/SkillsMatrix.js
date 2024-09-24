@@ -25,6 +25,7 @@ const SkillsMatrix = () => {
     const [selectedScores, setSelectedScores] = useState([1, 2, 3, 4, 5]);
     const [skillSearchTerm, setSkillSearchTerm] = useState(''); // State for skill search
 
+    
     useEffect(() => {
         if (user) {
             fetchCompanyId();
@@ -95,7 +96,7 @@ const SkillsMatrix = () => {
                     headers: { "Authorization": `Bearer ${user.token}` },
                 })
             ));
-            
+            console.log("ratings:", userSkillsResponse)
             const skillsData = userSkillsResponse.reduce((acc, { data }, idx) => {
                 acc[userIds[idx]] = data.reduce((skillAcc, rating) => {
                     if (rating.skill && rating.skill.id) {
@@ -105,7 +106,7 @@ const SkillsMatrix = () => {
                 }, {});
                 return acc;
             }, {});
-
+            
             setUserSkills(skillsData);
         } catch (error) {
             console.error("Error fetching user skills:", error);
