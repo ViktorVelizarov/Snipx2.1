@@ -15,7 +15,7 @@ const TaskManagement = () => {
   const [newTaskType, setNewTaskType] = useState('');
   const [loading, setLoading] = useState(false);
 
-  console.log("users:", users)
+  console.log("users:", users);
 
   // Fetch the company ID of the logged-in user
   useEffect(() => {
@@ -171,15 +171,26 @@ const TaskManagement = () => {
               <p>{task.task_description}</p>
               <p><strong>Type:</strong> {task.task_type}</p>
               <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
+              <p><strong>Assigned Users:</strong> {task.hasUsersAssigned ? 'Yes' : 'No'}</p> {/* Display if users are assigned */}
               <button className="delete-task-button" onClick={() => deleteTask(task.id)}>Delete Task</button>
               
               {/* Assign users to this task */}
               <div className="assign-users-section">
                 <h4>Assign Users to Task</h4>
                 <select multiple value={selectedUsers} onChange={(e) => handleUserSelection(e.target.value)}>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>{user.name}</option>
-                  ))}
+                  {users.map((user) => {
+                    // Check if the user is already assigned to the task
+                    const isAssigned = task.assignedUsers.some(assignedUser => assignedUser.user_id === user.id);
+                    return (
+                      <option 
+                        key={user.id} 
+                        value={user.id} 
+                        disabled={isAssigned} // Disable option if the user is already assigned
+                      >
+                        {user.name} {isAssigned ? '(Already Assigned)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
                 <button className="assign-users-button" onClick={() => assignUsersToTask(task.id)}>
                   Assign Selected Users
