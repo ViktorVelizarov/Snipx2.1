@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Line, Bar, Radar, Doughnut } from 'react-chartjs-2';
+import { Line, Bar, Radar } from 'react-chartjs-2';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 import './TeamAnalytics.css';
 import { useOutletContext } from 'react-router-dom';
 
@@ -16,7 +18,6 @@ import {
     Title,
     Tooltip,
     Legend,
-    ArcElement
 } from 'chart.js';
 
 ChartJS.register(
@@ -28,57 +29,85 @@ ChartJS.register(
     BarElement,
     Title,
     Tooltip,
-    Legend,
-    ArcElement
+    Legend
 );
 
 const TeamAnalytics = () => {
     const { user } = useAuth();
-    const { isDarkMode } = useOutletContext(); // Capture dark mode state
+    const { isDarkMode } = useOutletContext();
     const [teams, setTeams] = useState([]);
     const [users, setUsers] = useState([]);
-    const [skillsRatings, setSkillsRatings] = useState([]);
+    const [skills, setSkills] = useState([]);
+    const [userSkillsWithRatings, setUserSkillsWithRatings] = useState([]);
+    const [snippets, setSnippets] = useState([]);
+    const [filteredSnippets, setFilteredSnippets] = useState([]);
+    const [selectedEntity, setSelectedEntity] = useState(null);
+    const [selectedEntityType, setSelectedEntityType] = useState('teams');
     const [selectedTimePeriod, setSelectedTimePeriod] = useState('Last week');
-    const [selectedUsers, setSelectedUsers] = useState([]);
-    const [selectedTeams, setSelectedTeams] = useState([]);
+    const [customDateRange, setCustomDateRange] = useState([new Date(), new Date()]);
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [companyId, setCompanyId] = useState(null);
+    const [isDataReady, setIsDataReady] = useState(false);
+
     const lineChartRef = useRef(null);
     const barChartRef = useRef(null);
-    const radarCriticalPanthersRef = useRef(null);
-    const radarPDPChartRef = useRef(null);
-    const doughnutRef = useRef(null);
+    const radarChartRef = useRef(null);
+    const pdpRadarChartRef = useRef(null);
 
-    const [pdpData, setPdpData] = useState({ labels: [], datasets: [] });
-    const [progressData, setProgressData] = useState({
-        labels: ['Progress', 'Remaining'],
+    const defaultChartData = {
+        labels: [],
         datasets: [
             {
-                data: [0, 100],
-                backgroundColor: ['green', 'red'],
-                borderWidth: 0,
-                cutout: '50%',
-            }
-        ]
-    });
+                label: 'No Data',
+                data: [],
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                borderColor: 'rgba(0, 0, 0, 0.1)',
+            },
+        ],
+    };
 
     useEffect(() => {
-        fetchTeams();
-        fetchUsers();
-        fetchRatings(); // Fetch ratings for progress calculation
-        generatePdpData();
+        if (user) {
+            fetchCompanyId();
+            fetchTeams();
+            fetchUsers();
+        }
     }, [user]);
 
     useEffect(() => {
-        if (selectedUsers.length || selectedTeams.length) {
-            fetchSnippets();
+        if (companyId) {
+            fetchSkills();
         }
-    }, [selectedUsers, selectedTeams, selectedTimePeriod]);
+    }, [companyId]);
+
+    useEffect(() => {
+        if (selectedEntity) {
+            fetchSnippets();
+            fetchUserSkills(selectedEntity.id);
+        }
+    }, [selectedEntity, selectedTimePeriod, customDateRange]); // React to calendar changes
+
+    useEffect(() => {
+        if (filteredSnippets.length || userSkillsWithRatings.length) {
+            updateCharts(filteredSnippets, userSkillsWithRatings);
+        }
+    }, [filteredSnippets, userSkillsWithRatings]);
+
+    const fetchCompanyId = async () => {
+        try {
+            const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${user.id}/company`, {
+                headers: { "Authorization": `Bearer ${user.token}` },
+            });
+            setCompanyId(response.data.companyId);
+        } catch (error) {
+            console.error("Error fetching company ID:", error);
+        }
+    };
 
     const fetchTeams = async () => {
         try {
             const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/teams?userId=${user.id}`, {
-                headers: {
-                    "Authorization": `Bearer ${user.token}`
-                }
+                headers: { "Authorization": `Bearer ${user.token}` }
             });
             setTeams(response.data);
         } catch (error) {
@@ -95,252 +124,287 @@ const TeamAnalytics = () => {
         }
     };
 
+    const fetchSkills = async () => {
+        if (!companyId) return;
+        try {
+            const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/skills/${companyId}`, {
+                headers: { "Authorization": `Bearer ${user.token}` }
+            });
+            setSkills(response.data);
+        } catch (error) {
+            console.error("Error fetching skills:", error);
+        }
+    };
+
+    const fetchUserSkills = async (userId) => {
+        try {
+            const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`, {
+                headers: { "Authorization": `Bearer ${user.token}` }
+            });
+
+            const ratingsData = response.data.reduce((acc, rating) => {
+                if (rating.skill && rating.skill.id) {
+                    acc[rating.skill.id] = parseFloat(rating.score); // Ensure score is parsed as float
+                }
+                return acc;
+            }, {});
+
+            const userSkillsWithRatings = skills.map(skill => ({
+                skillName: skill.skill_name,
+                score: ratingsData[skill.id] || 0
+            }));
+
+            setUserSkillsWithRatings(userSkillsWithRatings);
+        } catch (error) {
+            console.error("Error fetching user skills:", error);
+        }
+    };
+
     const fetchSnippets = async () => {
         try {
-            const userIds = selectedUsers.map(user => user.id);
-            const teamIds = selectedTeams.map(team => team.id);
-            const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/team_snippets", {
-                userIds,
-                teamIds,
-                timePeriod: selectedTimePeriod,
+            let endpoint = '';
+            let payload = {};
+
+            if (selectedEntityType === 'teams') {
+                endpoint = `https://extension-360407.lm.r.appspot.com/api/team_snippets`;
+                payload = { teamIdReq: selectedEntity.id };
+            } else if (selectedEntityType === 'users') {
+                endpoint = `https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`;
+                payload = { id: selectedEntity.id };
+            }
+
+            const response = await axios.post(endpoint, payload, {
+                headers: { "Authorization": `Bearer ${user.token}` }
             });
-            updateChartData(response.data);
+
+            let filteredSnippets = filterSnippetsByTime(response.data);
+            filteredSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure chronological order
+            setFilteredSnippets(filteredSnippets);
+            setIsDataReady(true);
         } catch (error) {
             console.error("Error fetching snippets:", error);
         }
     };
 
-    // Fetch skill ratings from the database
-    const fetchRatings = async () => {
-        try {
-            const response = await axios.get("https://extension-360407.lm.r.appspot.com/api/ratings", {
-                headers: {
-                    "Authorization": `Bearer ${user.token}`
-                }
+    const filterSnippetsByTime = (snippets) => {
+        const now = new Date();
+        let filteredSnippets = snippets;
+
+        if (selectedTimePeriod === 'Last week') {
+            const oneWeekAgo = new Date(now.setDate(now.getDate() - 7));
+            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneWeekAgo);
+        } else if (selectedTimePeriod === 'Last month') {
+            const oneMonthAgo = new Date(now.setMonth(now.getMonth() - 1));
+            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneMonthAgo);
+        } else if (selectedTimePeriod === 'Last year') {
+            const oneYearAgo = new Date(now.setFullYear(now.getFullYear() - 1));
+            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneYearAgo);
+        } else if (selectedTimePeriod === 'Calendar') {
+            filteredSnippets = snippets.filter(snippet => {
+                const snippetDate = new Date(snippet.date);
+                return snippetDate >= customDateRange[0] && snippetDate <= customDateRange[1];
             });
-            const ratings = response.data;
-            setSkillsRatings(ratings);
-            calculateOverallProgress(ratings); // Calculate progress using the fetched ratings
-        } catch (error) {
-            console.error("Error fetching ratings:", error);
         }
+
+        return filteredSnippets;
     };
 
-    // Calculate overall progress based on the skills ratings
-    const calculateOverallProgress = (ratings) => {
-        if (ratings.length === 0) return;
+    const updateCharts = (data, skillsData) => {
+        const trendLabels = data.map(snippet => new Date(snippet.date).toLocaleDateString());
+        const sentimentScores = data.map(snippet => parseFloat(snippet.score)); // Ensure scores are numbers
+        const criticalPanthers = data.filter(snippet => snippet.score < 4);
 
-        // Assuming the max score for each skill is 5
-        const totalPossibleScore = ratings.length * 5;
-        const totalActualScore = ratings.reduce((acc, rating) => acc + rating.score, 0);
+        const dayStats = new Array(7).fill(0).map(() => ({ total: 0, count: 0 }));
 
-        const progress = (totalActualScore / totalPossibleScore) * 100;
-        const remaining = 100 - progress;
-
-        // Update the doughnut chart data
-        setProgressData({
-            labels: ['Progress', 'Remaining'],
-            datasets: [
-                {
-                    data: [progress, remaining],
-                    backgroundColor: ['green', 'red'],
-                    cutout: '50%', // Doughnut style for thickness
-                    circumference: 180,
-                    rotation: -90, // Rotate to start from top and face down
-                }
-            ]
+        data.forEach(snippet => {
+            const dayOfWeek = new Date(snippet.date).getDay();
+            const score = parseFloat(snippet.score);
+            dayStats[dayOfWeek].total += score;
+            dayStats[dayOfWeek].count += 1;
         });
 
-        // Update the doughnut chart UI
-        if (doughnutRef.current) {
-            doughnutRef.current.update();
-        }
-    };
+        const dayStatsAverages = dayStats.map(day => day.count === 0 ? 0 : day.total / day.count);
 
-    const updateChartData = (data) => {
-        const trendLabels = data.map(snippet => new Date(snippet.date).toLocaleDateString());
-        const sentimentScores = data.map(snippet => snippet.score);
-        const criticalPanthers = data.filter(snippet => snippet.score < 5); // Critical Panthers
+        const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--graph-line-color').trim();
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim();
 
-        const sentimentDataSets = selectedUsers.map((user, index) => ({
-            label: `${user.email}`,
-            data: sentimentScores,
-            borderColor: `rgba(${index * 40}, 99, 132, 1)`,
-            backgroundColor: `rgba(${index * 40}, 99, 132, 0.2)`,
-        }));
-
-        // Sentiment Scores Over Time
         if (lineChartRef.current) {
             lineChartRef.current.data = {
                 labels: trendLabels,
-                datasets: sentimentDataSets
+                datasets: [{
+                    label: 'Sentiment Scores Over Time',
+                    data: sentimentScores,
+                    borderColor: lineColor,
+                    backgroundColor: 'rgba(75,192,192,0.2)',
+                }]
+            };
+            lineChartRef.current.options = {
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 10,
+                        ticks: { color: textColor }
+                    }
+                }
             };
             lineChartRef.current.update();
         }
-
-        // Average Sentiment by Day
-        const dayStats = [0, 0, 0, 0, 0, 0, 0];
-        data.forEach(snippet => {
-            const dayOfWeek = new Date(snippet.date).getDay();
-            dayStats[dayOfWeek] += snippet.score;
-        });
 
         if (barChartRef.current) {
             barChartRef.current.data = {
                 labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
                 datasets: [{
                     label: 'Average Sentiment by Day',
-                    data: dayStats,
+                    data: dayStatsAverages,
                     backgroundColor: 'rgba(153, 102, 255, 0.6)',
                     borderColor: 'rgba(153, 102, 255, 1)',
                 }]
             };
+            barChartRef.current.options = {
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 10,
+                        ticks: { color: textColor }
+                    }
+                }
+            };
             barChartRef.current.update();
         }
 
-        // Critical Panthers (Radar)
-        if (radarCriticalPanthersRef.current) {
-            radarCriticalPanthersRef.current.data = {
+        if (radarChartRef.current) {
+            radarChartRef.current.data = {
                 labels: criticalPanthers.map(snippet => new Date(snippet.date).toLocaleDateString()),
                 datasets: [{
-                    label: 'Critical Panthers',
+                    label: 'Critical Panthers (Low Sentiment)',
                     data: criticalPanthers.map(snippet => snippet.score),
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderColor: 'rgba(255, 99, 132, 1)',
                     pointBackgroundColor: 'rgba(255, 99, 132, 1)',
                 }]
             };
-            radarCriticalPanthersRef.current.update();
+            radarChartRef.current.options = {
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 10,
+                        ticks: { color: textColor }
+                    }
+                }
+            };
+            radarChartRef.current.update();
         }
-    };
 
-    // Generate PDP Radar data
-    const generatePdpData = () => {
-        const pdpLabels = ['Leadership', 'Communication', 'Problem Solving', 'Teamwork', 'Adaptability'];
-        const pdpScores = pdpLabels.map(() => Math.floor(Math.random() * 10) + 1);
-        setPdpData({
-            labels: pdpLabels,
-            datasets: [
-                {
+        if (pdpRadarChartRef.current) {
+            const skillNames = skillsData.map(skill => skill.skillName);
+            const skillScores = skillsData.map(skill => skill.score);
+
+            pdpRadarChartRef.current.data = {
+                labels: skillNames,
+                datasets: [{
                     label: 'PDP Progress',
-                    data: pdpScores,
+                    data: skillScores,
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                    pointBorderColor: '#fff',
-                },
-            ],
-        });
+                }]
+            };
+            pdpRadarChartRef.current.options = {
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 5,
+                        ticks: { color: textColor }
+                    }
+                }
+            };
+            pdpRadarChartRef.current.update();
+        }
+    };
+
+    const handleEntityTypeChange = (type) => {
+        setSelectedEntityType(type);
+        setSelectedEntity(null);
+    };
+
+    const handleTimePeriodChange = (value) => {
+        setSelectedTimePeriod(value);
+        setShowCalendar(value === 'Calendar');
+        if (selectedEntity && value !== 'Calendar') {
+            fetchSnippets();
+        }
+    };
+
+    const onCalendarChange = (dateRange) => {
+        setCustomDateRange(dateRange);
+        if (selectedEntity) {
+            fetchSnippets();
+        }
     };
 
     return (
         <div className="team-analytics-page">
-            {/* Overall Progress Half-circle Doughnut */}
-            <div className="overall-progress">
-                <h2 className="page-title">Team Analytics Dashboard</h2>
-                <div className="half-doughnut-container">
-                    <Doughnut
-                        ref={doughnutRef}
-                        data={progressData}
-                        options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false } // Hide legend for a clean look
-                            }
-                        }}
-                    />
-                </div>
-            </div>
+            <h2 className="page-title">Team Analytics Dashboard</h2>
 
             <div className="dropdown-container">
-                <select value={selectedTimePeriod} onChange={(e) => setSelectedTimePeriod(e.target.value)}>
+                <select value={selectedEntityType} onChange={(e) => handleEntityTypeChange(e.target.value)}>
+                    <option value="teams">Teams</option>
+                    <option value="users">Users</option>
+                </select>
+
+                <select
+                    value={selectedEntity ? selectedEntity.id : ''}
+                    onChange={(e) => {
+                        const entity = (selectedEntityType === 'teams' ? teams : users).find(entity => entity.id === parseInt(e.target.value));
+                        setSelectedEntity(entity);
+                    }}
+                >
+                    <option value="" disabled>Select {selectedEntityType === 'teams' ? 'Team' : 'User'}</option>
+                    {selectedEntityType === 'teams' && teams.map(team => (
+                        <option key={team.id} value={team.id}>{team.team_name}</option>
+                    ))}
+                    {selectedEntityType === 'users' && users.map(user => (
+                        <option key={user.id} value={user.id}>{user.email}</option>
+                    ))}
+                </select>
+
+                <select value={selectedTimePeriod} onChange={(e) => handleTimePeriodChange(e.target.value)}>
                     <option value="Last week">Last week</option>
                     <option value="Last month">Last month</option>
                     <option value="Last year">Last year</option>
                     <option value="Calendar">Calendar</option>
                 </select>
-
-                <select
-                    multiple
-                    value={selectedUsers.map(user => user.id)}
-                    onChange={(e) => {
-                        const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-                        const updatedUsers = users.filter(user => selectedIds.includes(user.id));
-                        setSelectedUsers(updatedUsers);
-                    }}
-                >
-                    {users.map(user => (
-                        <option key={user.id} value={user.id}>
-                            {user.email}
-                        </option>
-                    ))}
-                </select>
-
-                <select
-                    multiple
-                    value={selectedTeams.map(team => team.id)}
-                    onChange={(e) => {
-                        const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-                        const updatedTeams = teams.filter(team => selectedIds.includes(team.id));
-                        setSelectedTeams(updatedTeams);
-                    }}
-                >
-                    {teams.map(team => (
-                        <option key={team.id} value={team.id}>
-                            {team.team_name}
-                        </option>
-                    ))}
-                </select>
             </div>
 
+            {showCalendar && (
+                <div className="calendar-container">
+                    <Calendar
+                        onChange={onCalendarChange}
+                        selectRange={true}
+                        value={customDateRange}
+                    />
+                </div>
+            )}
+
             <div className="grid-container">
-                {/* Sentiment Scores Over Time */}
                 <div className="chart-section">
                     <h3>Sentiment Scores Over Time</h3>
-                    <Line ref={lineChartRef} data={{ labels: [], datasets: [] }} options={{
-                        scales: {
-                            x: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim() }},
-                            y: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim() }},
-                        },
-                    }} />
+                    <Line ref={lineChartRef} data={defaultChartData} />
                 </div>
 
-                {/* PDP Progress */}
-                <div className="chart-section">
-                    <h3>PDP Progress - Skill Matrix</h3>
-                    <Radar ref={radarPDPChartRef} data={pdpData} options={{
-                        scales: {
-                            r: {
-                                pointLabels: { color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim() }
-                            }
-                        },
-                    }} />
-                </div>
-
-                {/* Average Sentiment by Day */}
                 <div className="chart-section">
                     <h3>Average Sentiment by Day</h3>
-                    <Bar ref={barChartRef} data={{ labels: [], datasets: [] }} options={{
-                        scales: {
-                            x: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim() }},
-                            y: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim() }},
-                        },
-                    }} />
+                    <Bar ref={barChartRef} data={defaultChartData} />
                 </div>
 
-                {/* Critical Panthers */}
                 <div className="chart-section">
                     <h3>Critical Panthers</h3>
-                    <Radar ref={radarCriticalPanthersRef} data={{ labels: [], datasets: [] }} options={{
-                        scales: {
-                            r: {
-                                ticks: { display: false },
-                                grid: { display: false },
-                                pointLabels: { color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim() }
-                            }
-                        },
-                    }} />
+                    <Radar ref={radarChartRef} data={defaultChartData} />
+                </div>
+
+                <div className="chart-section">
+                    <h3>PDP Progress</h3>
+                    <Radar ref={pdpRadarChartRef} data={defaultChartData} />
                 </div>
             </div>
         </div>
