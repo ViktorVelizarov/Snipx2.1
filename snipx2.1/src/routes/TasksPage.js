@@ -8,14 +8,15 @@ const TaskManagement = () => {
   const [companyId, setCompanyId] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]); // For storing users list
+  const [skills, setSkills] = useState([]); // For storing skills list
   const [selectedUsers, setSelectedUsers] = useState([]); // For storing selected users to assign
   const [selectedTaskId, setSelectedTaskId] = useState(null); // Task ID to which users will be assigned
+  const [selectedSkills, setSelectedSkills] = useState([]); // For storing selected skills
+  const [skillScore, setSkillScore] = useState(0); // For storing the score of a skill
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskType, setNewTaskType] = useState('');
   const [loading, setLoading] = useState(false);
-
-  console.log("users:", users);
 
   // Fetch the company ID of the logged-in user
   useEffect(() => {
@@ -71,6 +72,22 @@ const TaskManagement = () => {
     }
   }, [companyId, user]);
 
+  // Fetch skills that are not associated with a company
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        const response = await axios.get('https://extension-360407.lm.r.appspot.com/api/skills-no-company', {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setSkills(response.data);
+      } catch (error) {
+        console.error('Error fetching skills:', error);
+      }
+    };
+
+    fetchSkills();
+  }, [user]);
+
   // Handle new task creation
   const createTask = async () => {
     if (!newTaskName || !companyId) {
@@ -97,7 +114,7 @@ const TaskManagement = () => {
       setNewTaskType('');
 
       // Refresh the task list after creating a new task
-      const updatedTasks = await axios.get(`https://extension-360407.lm.r.appspot.com/api/tasks/${companyId}`, {
+      const updatedTasks = await axios.get(`https://extension-360407.lm.r.appspot.com/tasks/${companyId}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       setTasks(updatedTasks.data);
@@ -160,6 +177,43 @@ const TaskManagement = () => {
     }
   };
 
+  // Handle skill selection for task assignment
+  const handleSkillSelection = (skillId) => {
+    setSelectedSkills((prevSelected) => {
+      if (prevSelected.includes(skillId)) {
+        return prevSelected.filter((id) => id !== skillId);
+      } else {
+        return [...prevSelected, skillId];
+      }
+    });
+  };
+
+  // Handle assigning selected skills to a task
+  const assignSkillsToTask = async (taskId) => {
+    if (!selectedSkills.length || !skillScore) {
+      alert('No skills or score selected.');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `https://extension-360407.lm.r.appspot.com/api/tasks/${taskId}/assign-skills`,
+        { 
+          skill_ids: selectedSkills,  // Array of selected skill IDs
+          score: skillScore           // Numeric score value
+        },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+  
+      alert('Skills assigned successfully!');
+      setSelectedSkills([]);  // Clear selected skills after assignment
+      setSkillScore(0);       // Reset skill score input
+    } catch (error) {
+      console.error('Error assigning skills to task:', error);
+      alert('Failed to assign skills.');
+    }
+  };
+
   return (
     <div className="task-management-container">
       <h1 className="page-title">Manage Tasks</h1>
@@ -172,8 +226,14 @@ const TaskManagement = () => {
               <p><strong>Type:</strong> {task.task_type}</p>
               <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
               <p><strong>Assigned Users:</strong> {task.hasUsersAssigned ? 'Yes' : 'No'}</p> {/* Display if users are assigned */}
-              <button className="delete-task-button" onClick={() => deleteTask(task.id)}>Delete Task</button>
+              <p><strong>Assigned Skills:</strong> 
+                {task.taskSkills && task.taskSkills.length > 0
+                  ? task.taskSkills.map(skill => skill.skill_id).join(', ')
+                  : 'No skills assigned'}
+              </p> {/* Display assigned skills */}
               
+              <button className="delete-task-button" onClick={() => deleteTask(task.id)}>Delete Task</button>
+
               {/* Assign users to this task */}
               <div className="assign-users-section">
                 <h4>Assign Users to Task</h4>
@@ -192,42 +252,62 @@ const TaskManagement = () => {
                     );
                   })}
                 </select>
-                <button className="assign-users-button" onClick={() => assignUsersToTask(task.id)}>
-                  Assign Selected Users
-                </button>
+                <button className="assign-users-button" onClick={() => assignUsersToTask(task.id)}>Assign Users</button>
+              </div>
+
+              {/* Assign skills to this task */}
+              <div className="assign-skills-section">
+                <h4>Assign Skills to Task</h4>
+                <select multiple value={selectedSkills} onChange={(e) => handleSkillSelection(e.target.value)}>
+                  {skills.map((skill) => {
+                    // Check if the skill is already assigned to the task
+                    const isAssigned = task.taskSkills.some(taskSkill => taskSkill.skill_id === skill.id);
+                    return (
+                      <option 
+                        key={skill.id} 
+                        value={skill.id} 
+                        disabled={isAssigned} // Disable option if the skill is already assigned
+                      >
+                        {skill.name} {isAssigned ? '(Already Assigned)' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+                <input 
+                  type="number" 
+                  placeholder="Enter score" 
+                  value={skillScore} 
+                  onChange={(e) => setSkillScore(Number(e.target.value))}
+                />
+                <button className="assign-skills-button" onClick={() => assignSkillsToTask(task.id)}>Assign Skills</button>
               </div>
             </div>
           ))
         ) : (
-          <p>No tasks available for this company.</p>
+          <p>No tasks available.</p>
         )}
       </div>
 
-      <div className="create-task-form">
+      <div className="create-task-section">
         <h2>Create New Task</h2>
-        <input
-          type="text"
-          placeholder="Task Name"
-          value={newTaskName}
-          onChange={(e) => setNewTaskName(e.target.value)}
-          className="task-input"
+        <input 
+          type="text" 
+          placeholder="Task Name" 
+          value={newTaskName} 
+          onChange={(e) => setNewTaskName(e.target.value)} 
         />
-        <textarea
-          placeholder="Task Description"
-          value={newTaskDesc}
-          onChange={(e) => setNewTaskDesc(e.target.value)}
-          className="task-textarea"
+        <textarea 
+          placeholder="Task Description" 
+          value={newTaskDesc} 
+          onChange={(e) => setNewTaskDesc(e.target.value)} 
         />
-        <input
-          type="text"
-          placeholder="Task Type"
-          value={newTaskType}
-          onChange={(e) => setNewTaskType(e.target.value)}
-          className="task-input"
+        <input 
+          type="text" 
+          placeholder="Task Type" 
+          value={newTaskType} 
+          onChange={(e) => setNewTaskType(e.target.value)} 
         />
-        <button className="create-task-button" onClick={createTask} disabled={loading}>
-          {loading ? 'Creating Task...' : 'Create Task'}
-        </button>
+        <button onClick={createTask} disabled={loading}>{loading ? 'Creating...' : 'Create Task'}</button>
       </div>
     </div>
   );
