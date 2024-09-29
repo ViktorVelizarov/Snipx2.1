@@ -109,6 +109,9 @@ const NavBar = () => {
                                     <li>
                                         <Link to="/tasks"><FaUsers /> Tasks</Link>
                                     </li>
+                                    <li>
+                                        <Link to="/notifications"><FaUsers /> Notifications</Link>
+                                    </li>
                                 </>
                             )}
                             <li className="logout">

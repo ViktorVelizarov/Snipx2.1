@@ -6,6 +6,7 @@ import MySnippets from "./routes/MySnippets";
 import UserPDP from "./routes/UserPDP";
 import LandingPage from "./routes/LandingPage";
 import WeeklyReport from "./routes/WeeklyReport";
+import Notifications from "./routes/Notifications";
 import TasksPage from "./routes/TasksPage";
 import NotAuthorized from "./routes/NotAuthorized";
 import Login from "./routes/Login";
@@ -50,6 +51,7 @@ export const router = createBrowserRouter(
           <Route path="snippets" element={<Snippets />} />
           <Route path="users" element={<Users />} />
           <Route path="teams" element={<Teams />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
       </Route>
     </Route>

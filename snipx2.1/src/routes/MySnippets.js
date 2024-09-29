@@ -22,6 +22,7 @@ function MySnippets() {
     red: "",
     explanations: "",
   });
+console.log("Snippets data:", snippets)
 
   // Separate refs for each textarea
   const textRef = useRef([]);

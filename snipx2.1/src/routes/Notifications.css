@@ -1,0 +1,58 @@
+/* User Skill Hours and Notifications Page Styling */
+:root {
+    --container-color1: #E4277D;
+    --container-color2: #FFB300;
+    --btn-bg-color: #E4277D;
+    --colored-text: white;
+}
+
+.container {
+    width: 90%;
+    margin: 40px auto;
+    padding: 20px;
+    background: transparent;
+    color: var(--colored-text);
+}
+
+.page-title {
+    font-size: 28px;
+    color: #E4277D; /* Title color */
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.table-container {
+    margin-top: 20px;
+    background-color: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.table-title {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--container-color1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    color: #555;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
