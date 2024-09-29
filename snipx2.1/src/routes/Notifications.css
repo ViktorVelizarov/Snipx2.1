@@ -1,12 +1,12 @@
-/* User Skill Hours and Notifications Page Styling */
+/* Notifications Page Styling */
 :root {
     --container-color1: #E4277D;
     --container-color2: #FFB300;
-    --btn-bg-color: #E4277D;
-    --colored-text: white;
+    --btn-bg-color : #E4277D;
+    --colored-text : white;
 }
 
-.container {
+.notifications-container {
     width: 90%;
     margin: 40px auto;
     padding: 20px;
@@ -16,29 +16,22 @@
 
 .page-title {
     font-size: 28px;
-    color: #E4277D; /* Title color */
+    color: #E4277D; /* Update title color */
     text-align: left;
     margin-bottom: 20px;
 }
 
-.table-container {
+.notifications-table {
     margin-top: 20px;
-    background-color: white;
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.table-title {
-    font-size: 24px;
-    margin-bottom: 10px;
-    color: var(--container-color1);
 }
 
 table {
     width: 100%;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
     border-collapse: collapse;
-    margin-top: 10px;
+    border-radius: 20px;
+    overflow: hidden;
+    background-color: white;
 }
 
 th, td {
@@ -55,4 +48,19 @@ th {
 
 tr:last-child td {
     border-bottom: none;
+}
+
+.approve-button {
+    background: linear-gradient(45deg, var(--btn-bg-color), var(--container-color2));
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.approve-button:hover {
+    background: white;
+    color: var(--container-color2);
 }

@@ -41,6 +41,25 @@ function UserSkillHoursAndNotifications() {
         }
     };
 
+    // Function to handle approving a notification
+    const handleApprove = async (id) => {
+        const confirmed = window.confirm("Are you sure you want to approve this notification?");
+        if (confirmed) {
+            try {
+                const response = await fetch(`https://extension-360407.lm.r.appspot.com/api/notification/${id}`, {
+                    method: "DELETE",
+                });
+                if (response.ok) {
+                    fetchNotifications(); // Refresh notifications
+                } else {
+                    console.error("Failed to approve notification");
+                }
+            } catch (error) {
+                console.error("Error approving notification:", error);
+            }
+        }
+    };
+
     // Fetch user skill hours and notifications on component mount
     useEffect(() => {
         fetchUserSkillHours();
@@ -86,6 +105,7 @@ function UserSkillHoursAndNotifications() {
                             <th>User ID</th>
                             <th>Skill ID</th>
                             <th>Approved</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -95,6 +115,16 @@ function UserSkillHoursAndNotifications() {
                                 <td>{notification.user_id}</td>
                                 <td>{notification.skill_id}</td>
                                 <td>{notification.approved ? 'Yes' : 'No'}</td>
+                                <td>
+                                    {!notification.approved && (
+                                        <button 
+                                            onClick={() => handleApprove(notification.id)} 
+                                            className="approve-button"
+                                        >
+                                            Approve
+                                        </button>
+                                    )}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
