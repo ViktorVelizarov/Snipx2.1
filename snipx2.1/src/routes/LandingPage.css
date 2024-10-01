@@ -88,20 +88,30 @@
     height: 100%;
   }
   
+  .average-score-container {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Adjust the spacing between the average score and the button */
+  }
+  
   .average-score {
-    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   
   .circle {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    background-color: #ddd;
+    background-color: #f4f4f4;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     font-size: 24px;
+    color: #333;
   }
+  
   
   .calendar-section {
     display: flex;

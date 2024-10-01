@@ -14,10 +14,10 @@ import {
     RadialLinearScale,
     PointElement,
     LineElement,
-    BarElement,
+    BarElement, // Import it only once here
     Title,
     Tooltip,
-    Legend,
+    Legend
 } from 'chart.js';
 
 ChartJS.register(
@@ -26,7 +26,7 @@ ChartJS.register(
     RadialLinearScale,
     PointElement,
     LineElement,
-    BarElement,
+    BarElement, // Register BarElement once here
     Title,
     Tooltip,
     Legend
@@ -85,7 +85,7 @@ const TeamAnalytics = () => {
             fetchSnippets();
             fetchUserSkills(selectedEntity.id);
         }
-    }, [selectedEntity, selectedTimePeriod, customDateRange]); // React to calendar changes
+    }, [selectedEntity, selectedTimePeriod, customDateRange]); // React to entity and calendar changes
 
     useEffect(() => {
         if (filteredSnippets.length || userSkillsWithRatings.length) {
@@ -118,6 +118,7 @@ const TeamAnalytics = () => {
     const fetchUsers = async () => {
         try {
             const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_users", user);
+            console.log("Fetched users:", response.data); // Log fetched users to check their teamId
             setUsers(response.data);
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -166,74 +167,136 @@ const TeamAnalytics = () => {
             let payload = {};
 
             if (selectedEntityType === 'teams') {
-                endpoint = `https://extension-360407.lm.r.appspot.com/api/team_snippets`;
-                payload = { teamIdReq: selectedEntity.id };
+                fetchTeamSnippets(selectedEntity.id); // Fetch team snippets
             } else if (selectedEntityType === 'users') {
                 endpoint = `https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`;
                 payload = { id: selectedEntity.id };
+                const response = await axios.post(endpoint, payload, {
+                    headers: { "Authorization": `Bearer ${user.token}` }
+                });
+                let filteredSnippets = filterSnippetsByTime(response.data);
+                setFilteredSnippets(filteredSnippets);
+                setIsDataReady(true);
             }
-
-            const response = await axios.post(endpoint, payload, {
-                headers: { "Authorization": `Bearer ${user.token}` }
-            });
-
-            let filteredSnippets = filterSnippetsByTime(response.data);
-            filteredSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure chronological order
-            setFilteredSnippets(filteredSnippets);
-            setIsDataReady(true);
         } catch (error) {
             console.error("Error fetching snippets:", error);
         }
     };
 
+    const fetchTeamSnippets = async (teamId) => {
+        try {
+            const teamMembers = users.filter(user => user.teamId === teamId);
+            console.log("Team members:", teamMembers); // Log team members to see if they are correctly fetched
+            
+            let allSnippets = [];
+        
+            // Step 1: Fetch snippets for each team member
+            for (const member of teamMembers) {
+                const response = await axios.post(`https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`, {
+                    id: member.id
+                }, {
+                    headers: { "Authorization": `Bearer ${user.token}` }
+                });
+                allSnippets = [...allSnippets, ...response.data];
+            }
+            
+            console.log("All snippets fetched for team members:", allSnippets); // Log fetched snippets
+        
+            // Step 2: Organize snippets by date and calculate average sentiment for each day
+            const teamDayStats = {};
+            allSnippets.forEach(snippet => {
+                const snippetDate = new Date(snippet.date).toLocaleDateString(); // Group by date
+                const score = parseFloat(snippet.score); // Convert the score to a number
+        
+                // Initialize date entry if it doesn't exist
+                if (!teamDayStats[snippetDate]) {
+                    teamDayStats[snippetDate] = { totalScore: 0, snippetCount: 0 };
+                }
+        
+                // Add the score and increment the snippet count for the specific day
+                teamDayStats[snippetDate].totalScore += score;
+                teamDayStats[snippetDate].snippetCount += 1;
+            });
+            
+            console.log("Team day stats:", teamDayStats); // Log the teamDayStats to check aggregation
+        
+            // Step 3: Calculate average sentiment for each day (one data point per day)
+            const teamSnippets = Object.keys(teamDayStats).map(date => ({
+                date,
+                score: teamDayStats[date].totalScore / teamDayStats[date].snippetCount // Calculate average
+            }));
+        
+            // Step 4: Sort snippets by date
+            const sortedSnippets = teamSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+            // Step 5: Apply the time filter to the computed daily averages
+            const filteredSnippets = filterSnippetsByTime(sortedSnippets);
+            
+            console.log("Filtered snippets:", filteredSnippets); // Log the filtered snippets to check the result
+        
+            // Step 6: Update state
+            setFilteredSnippets(filteredSnippets);
+            setIsDataReady(true);
+        } catch (error) {
+            console.error("Error fetching team snippets:", error);
+        }
+    };
+
     const filterSnippetsByTime = (snippets) => {
         const now = new Date();
-        let filteredSnippets = snippets;
+        let filteredData = snippets;
 
+        // Apply time-based filtering
         if (selectedTimePeriod === 'Last week') {
-            const oneWeekAgo = new Date(now.setDate(now.getDate() - 7));
-            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneWeekAgo);
+            const oneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+            filteredData = snippets.filter(snippet => new Date(snippet.date) >= oneWeekAgo);
         } else if (selectedTimePeriod === 'Last month') {
-            const oneMonthAgo = new Date(now.setMonth(now.getMonth() - 1));
-            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneMonthAgo);
+            const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            filteredData = snippets.filter(snippet => new Date(snippet.date) >= oneMonthAgo);
         } else if (selectedTimePeriod === 'Last year') {
-            const oneYearAgo = new Date(now.setFullYear(now.getFullYear() - 1));
-            filteredSnippets = snippets.filter(snippet => new Date(snippet.date) >= oneYearAgo);
+            const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+            filteredData = snippets.filter(snippet => new Date(snippet.date) >= oneYearAgo);
         } else if (selectedTimePeriod === 'Calendar') {
-            filteredSnippets = snippets.filter(snippet => {
+            filteredData = snippets.filter(snippet => {
                 const snippetDate = new Date(snippet.date);
                 return snippetDate >= customDateRange[0] && snippetDate <= customDateRange[1];
             });
         }
 
-        return filteredSnippets;
+        // Sort the filtered data in chronological order
+        filteredData = filteredData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        return filteredData;
     };
 
     const updateCharts = (data, skillsData) => {
+        // Step 1: Create labels based on the dates in the data
         const trendLabels = data.map(snippet => new Date(snippet.date).toLocaleDateString());
         const sentimentScores = data.map(snippet => parseFloat(snippet.score)); // Ensure scores are numbers
-        const criticalPanthers = data.filter(snippet => snippet.score < 4);
-
+    
+        // Step 2: Create dayStats to track total scores and counts for each day of the week
         const dayStats = new Array(7).fill(0).map(() => ({ total: 0, count: 0 }));
-
+    
+        // Step 3: Add up the scores for each day of the week
         data.forEach(snippet => {
-            const dayOfWeek = new Date(snippet.date).getDay();
-            const score = parseFloat(snippet.score);
-            dayStats[dayOfWeek].total += score;
-            dayStats[dayOfWeek].count += 1;
+            const dayOfWeek = new Date(snippet.date).getDay(); // Get day of the week (0 = Sunday, 6 = Saturday)
+            dayStats[dayOfWeek].total += parseFloat(snippet.score); // Add up the scores
+            dayStats[dayOfWeek].count += 1; // Increment count for that day
         });
-
+    
+        // Step 4: Compute the average sentiment for each day of the week
         const dayStatsAverages = dayStats.map(day => day.count === 0 ? 0 : day.total / day.count);
-
+    
+        // Step 5: Update the charts
         const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--graph-line-color').trim();
         const textColor = getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim();
-
+    
         if (lineChartRef.current) {
             lineChartRef.current.data = {
                 labels: trendLabels,
                 datasets: [{
                     label: 'Sentiment Scores Over Time',
-                    data: sentimentScores,
+                    data: sentimentScores, // Use averaged sentiment scores per day
                     borderColor: lineColor,
                     backgroundColor: 'rgba(75,192,192,0.2)',
                 }]
@@ -243,62 +306,55 @@ const TeamAnalytics = () => {
                     y: {
                         min: 0,
                         max: 10,
-                        ticks: { color: textColor }
+                        ticks: {
+                            color: textColor,
+                            stepSize: 0.1 // Ensure floating point precision
+                        }
                     }
                 }
             };
             lineChartRef.current.update();
         }
-
+    
         if (barChartRef.current) {
             barChartRef.current.data = {
                 labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
                 datasets: [{
                     label: 'Average Sentiment by Day',
-                    data: dayStatsAverages,
+                    data: dayStatsAverages, // Use the computed dayStatsAverages
                     backgroundColor: 'rgba(153, 102, 255, 0.6)',
                     borderColor: 'rgba(153, 102, 255, 1)',
                 }]
             };
             barChartRef.current.options = {
                 scales: {
-                    y: {
-                        min: 0,
-                        max: 10,
-                        ticks: { color: textColor }
-                    }
+                    y: { min: 0, max: 10, ticks: { color: textColor } }
                 }
             };
             barChartRef.current.update();
         }
-
+    
         if (radarChartRef.current) {
             radarChartRef.current.data = {
-                labels: criticalPanthers.map(snippet => new Date(snippet.date).toLocaleDateString()),
+                labels: data.map(snippet => new Date(snippet.date).toLocaleDateString()),
                 datasets: [{
                     label: 'Critical Panthers (Low Sentiment)',
-                    data: criticalPanthers.map(snippet => snippet.score),
+                    data: data.filter(snippet => parseFloat(snippet.score) < 4).map(snippet => parseFloat(snippet.score)),
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderColor: 'rgba(255, 99, 132, 1)',
                     pointBackgroundColor: 'rgba(255, 99, 132, 1)',
                 }]
             };
             radarChartRef.current.options = {
-                scales: {
-                    r: {
-                        min: 0,
-                        max: 10,
-                        ticks: { color: textColor }
-                    }
-                }
+                scales: { r: { min: 0, max: 10, ticks: { color: textColor } } }
             };
             radarChartRef.current.update();
         }
-
+    
         if (pdpRadarChartRef.current) {
             const skillNames = skillsData.map(skill => skill.skillName);
-            const skillScores = skillsData.map(skill => skill.score);
-
+            const skillScores = skillsData.map(skill => parseFloat(skill.score));
+    
             pdpRadarChartRef.current.data = {
                 labels: skillNames,
                 datasets: [{
@@ -310,35 +366,37 @@ const TeamAnalytics = () => {
                 }]
             };
             pdpRadarChartRef.current.options = {
-                scales: {
-                    r: {
-                        min: 0,
-                        max: 5,
-                        ticks: { color: textColor }
-                    }
-                }
+                scales: { r: { min: 0, max: 5, ticks: { color: textColor } } }
             };
             pdpRadarChartRef.current.update();
         }
     };
+    
 
     const handleEntityTypeChange = (type) => {
         setSelectedEntityType(type);
         setSelectedEntity(null);
+        setFilteredSnippets([]);  // Clear snippets when switching entity types
+    };
+
+    const handleTeamSelection = (e) => {
+        const entity = teams.find(team => team.id === parseInt(e.target.value));
+        console.log("Selected team:", entity); // Log the selected team to verify it's correct
+        setSelectedEntity(entity);
     };
 
     const handleTimePeriodChange = (value) => {
         setSelectedTimePeriod(value);
         setShowCalendar(value === 'Calendar');
         if (selectedEntity && value !== 'Calendar') {
-            fetchSnippets();
+            fetchSnippets(); // Fetch new data when time period changes
         }
     };
 
     const onCalendarChange = (dateRange) => {
         setCustomDateRange(dateRange);
         if (selectedEntity) {
-            fetchSnippets();
+            fetchSnippets(); // Fetch new data based on calendar range
         }
     };
 
@@ -354,17 +412,11 @@ const TeamAnalytics = () => {
 
                 <select
                     value={selectedEntity ? selectedEntity.id : ''}
-                    onChange={(e) => {
-                        const entity = (selectedEntityType === 'teams' ? teams : users).find(entity => entity.id === parseInt(e.target.value));
-                        setSelectedEntity(entity);
-                    }}
+                    onChange={(e) => handleTeamSelection(e)}
                 >
-                    <option value="" disabled>Select {selectedEntityType === 'teams' ? 'Team' : 'User'}</option>
-                    {selectedEntityType === 'teams' && teams.map(team => (
+                    <option value="" disabled>Select Team</option>
+                    {teams.map(team => (
                         <option key={team.id} value={team.id}>{team.team_name}</option>
-                    ))}
-                    {selectedEntityType === 'users' && users.map(user => (
-                        <option key={user.id} value={user.id}>{user.email}</option>
                     ))}
                 </select>
 
@@ -406,6 +458,7 @@ const TeamAnalytics = () => {
                     <h3>PDP Progress</h3>
                     <Radar ref={pdpRadarChartRef} data={defaultChartData} />
                 </div>
+
             </div>
         </div>
     );

@@ -21,6 +21,7 @@ function Snippets() {
     explanations: "",
     score: "",
     sentiment: "",
+    action_text: "", // Added action_text field
   });
 
   // Separate refs for each textarea
@@ -31,6 +32,7 @@ function Snippets() {
   const explanationsRef = useRef([]);
   const scoreRef = useRef([]);
   const sentimentRef = useRef([]);
+  const actionTextRef = useRef([]); // Add ref for action_text
 
   useEffect(() => {
     const fetchSnippets = async () => {
@@ -57,14 +59,12 @@ function Snippets() {
     fetchUsers();
   }, []);
 
-
   useEffect(() => {
     // Trigger resize whenever editingSnippetId is set
     if (editingSnippetId !== null) {
       resizeAllTextAreas();
     }
   }, [editingSnippetId]); // Re-run whenever editingSnippetId changes
-
 
   const handleDelete = async (id) => {
     try {
@@ -94,6 +94,7 @@ function Snippets() {
       explanations: snippet.explanations || "",
       score: snippet.score || "",
       sentiment: snippet.sentiment || "",
+      action_text: snippet.action_text || "", // Add action_text to edit mode
     });
   };
 
@@ -121,7 +122,6 @@ function Snippets() {
       console.error("Error saving snippet:", error);
     }
   };
-  
 
   const handleCancel = () => {
     setEditingSnippetId(null);
@@ -133,7 +133,7 @@ function Snippets() {
   };
 
   const resizeAllTextAreas = () => {
-    [textRef, greenRef, orangeRef, redRef, explanationsRef, scoreRef, sentimentRef].forEach(refGroup => {
+    [textRef, greenRef, orangeRef, redRef, explanationsRef, scoreRef, sentimentRef, actionTextRef].forEach(refGroup => {
       refGroup.current.forEach(textarea => {
         if (textarea) {
           textarea.style.height = "auto"; // Reset height
@@ -152,29 +152,30 @@ function Snippets() {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
-    <div className="container mx-auto p-4"> {/* Updated container class */}
-    <h1 className="text-3xl font-bold text-white mb-6 text-center">All Snippets</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold text-white mb-6 text-center">All Snippets</h1>
 
-    <div className="table-wrapper overflow-x-auto">
-      <table className="min-w-full bg-gradient-to-r from-ffb300 to-e4277d border border-gray-300 rounded-lg">
-        <thead>
-          <tr className="bg-opacity-80 bg-white">
-            <th className="py-3 px-4 text-left font-bold text-gray-800">ID</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Type</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Date</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Snippet Text</th>
-            <th><FontAwesomeIcon icon={faFlag} style={{ color: 'green'}} /></th>
-            <th><FontAwesomeIcon icon={faFlag} style={{ color: 'orange'}} /></th>
-            <th><FontAwesomeIcon icon={faFlag} style={{ color: 'red'}} /></th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Explanations</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Score</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Sentiment</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Assigned User</th>
-            <th className="py-3 px-4 text-left font-bold text-gray-800">Actions</th>
-          </tr>
+      <div className="table-wrapper overflow-x-auto">
+        <table className="min-w-full bg-gradient-to-r from-ffb300 to-e4277d border border-gray-300 rounded-lg">
+          <thead>
+            <tr className="bg-opacity-80 bg-white">
+              <th className="py-3 px-4 text-left font-bold text-gray-800">ID</th>
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Type</th>
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Date</th>
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Snippet Text</th>
+              <th><FontAwesomeIcon icon={faFlag} style={{ color: 'green'}} /></th>
+              <th><FontAwesomeIcon icon={faFlag} style={{ color: 'orange'}} /></th>
+              <th><FontAwesomeIcon icon={faFlag} style={{ color: 'red'}} /></th>
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Explanations</th>
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Score</th>
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Sentiment</th>
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Assigned User</th>
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Actions for Next Day</th> {/* New column for action_text */}
+              <th className="py-3 px-4 text-left font-bold text-gray-800">Actions</th>
+            </tr>
           </thead>
           <tbody>
-          {currentSnippets.map((snippet,index) => (
+            {currentSnippets.map((snippet, index) => (
               <tr key={snippet.id} className="bg-white bg-opacity-60 border-t border-gray-300">
                 <td className="py-2 px-4">{snippet.id}</td>
                 <td className="py-2 px-4">{editingSnippetId === snippet.id ? (
@@ -203,7 +204,7 @@ function Snippets() {
                   )}</td>
                 <td className="py-2 px-4">{editingSnippetId === snippet.id ? (
                     <textarea
-                      ref={el => (textRef.current[index] = el)} // Store the ref in textRef
+                      ref={el => (textRef.current[index] = el)}
                       value={editingSnippet.text}
                       onChange={(e) => {
                         setEditingSnippet({ ...editingSnippet, text: e.target.value });
@@ -217,7 +218,7 @@ function Snippets() {
                 <td className="py-2 px-4">
                   {editingSnippetId === snippet.id ? (
                     <textarea
-                      ref={el => (greenRef.current[index] = el)} // Store the ref in greenRef
+                      ref={el => (greenRef.current[index] = el)}
                       value={editingSnippet.green}
                       onChange={(e) => {
                         setEditingSnippet({ ...editingSnippet, green: e.target.value });
@@ -231,7 +232,7 @@ function Snippets() {
                 <td className="py-2 px-4">
                   {editingSnippetId === snippet.id ? (
                     <textarea
-                      ref={el => (orangeRef.current[index] = el)} // Store the ref in orangeRef
+                      ref={el => (orangeRef.current[index] = el)}
                       value={editingSnippet.orange}
                       onChange={(e) => {
                         setEditingSnippet({ ...editingSnippet, orange: e.target.value });
@@ -245,7 +246,7 @@ function Snippets() {
                 <td className="py-2 px-4">
                   {editingSnippetId === snippet.id ? (
                     <textarea
-                      ref={el => (redRef.current[index] = el)} // Store the ref in redRef
+                      ref={el => (redRef.current[index] = el)}
                       value={editingSnippet.red}
                       onChange={(e) => {
                         setEditingSnippet({ ...editingSnippet, red: e.target.value });
@@ -259,7 +260,7 @@ function Snippets() {
                 <td className="py-2 px-4">
                   {editingSnippetId === snippet.id ? (
                     <textarea
-                      ref={el => (explanationsRef.current[index] = el)} // Store the ref in explanationsRef
+                      ref={el => (explanationsRef.current[index] = el)}
                       value={editingSnippet.explanations}
                       onChange={(e) => {
                         setEditingSnippet({ ...editingSnippet, explanations: e.target.value });
@@ -273,7 +274,7 @@ function Snippets() {
                 <td className="py-2 px-4">
                   {editingSnippetId === snippet.id ? (
                     <textarea
-                      ref={el => (scoreRef.current[index] = el)} // Store the ref in scoreRef
+                      ref={el => (scoreRef.current[index] = el)}
                       value={editingSnippet.score}
                       onChange={(e) => {
                         setEditingSnippet({ ...editingSnippet, score: e.target.value });
@@ -287,7 +288,7 @@ function Snippets() {
                 <td className="py-2 px-4">
                   {editingSnippetId === snippet.id ? (
                     <textarea
-                      ref={el => (sentimentRef.current[index] = el)} // Store the ref in sentimentRef
+                      ref={el => (sentimentRef.current[index] = el)}
                       value={editingSnippet.sentiment}
                       onChange={(e) => {
                         setEditingSnippet({ ...editingSnippet, sentiment: e.target.value });
@@ -316,6 +317,20 @@ function Snippets() {
                     </select>
                   ) : (
                     getUserEmail(snippet.user_id)
+                  )}
+                </td>
+                <td className="py-2 px-4">
+                  {editingSnippetId === snippet.id ? (
+                    <textarea
+                      ref={el => (actionTextRef.current[index] = el)} // Store the ref in actionTextRef
+                      value={editingSnippet.action_text}
+                      onChange={(e) => {
+                        setEditingSnippet({ ...editingSnippet, action_text: e.target.value });
+                      }}
+                      className="edit-box"
+                    />
+                  ) : (
+                    snippet.action_text || "No action provided" // Show action_text or default
                   )}
                 </td>
                 <td className="py-2 px-4 flex space-x-2">
@@ -355,57 +370,55 @@ function Snippets() {
             ))}
           </tbody>
         </table>
-        {/* Transparent spacer */}
-        <div className="spacer"><p>111</p></div>
       </div>
       <div className="pagination">
-            {/* First Page Button */}
-            <button onClick={() => paginate(1)} disabled={currentPage === 1} className="pagination-button">
-            <FaAngleDoubleLeft  />
-            </button>
+        {/* First Page Button */}
+        <button onClick={() => paginate(1)} disabled={currentPage === 1} className="pagination-button">
+          <FaAngleDoubleLeft  />
+        </button>
 
-            {/* Previous Page Button */}
-            <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="pagination-button">
-            <FaAngleLeft  />
-            </button>
+        {/* Previous Page Button */}
+        <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="pagination-button">
+          <FaAngleLeft  />
+        </button>
 
-            {/* Previous Two Pages */}
-            {currentPage > 2 && (
-                <button onClick={() => paginate(currentPage - 2)} className="pagination-button">
-                    {currentPage - 2}
-                </button>
-            )}
-            {currentPage > 1 && (
-                <button onClick={() => paginate(currentPage - 1)} className="pagination-button">
-                    {currentPage - 1}
-                </button>
-            )}
+        {/* Previous Two Pages */}
+        {currentPage > 2 && (
+          <button onClick={() => paginate(currentPage - 2)} className="pagination-button">
+            {currentPage - 2}
+          </button>
+        )}
+        {currentPage > 1 && (
+          <button onClick={() => paginate(currentPage - 1)} className="pagination-button">
+            {currentPage - 1}
+          </button>
+        )}
 
-            {/* Current Page */}
-            <button className="pagination-button active">{currentPage}</button>
+        {/* Current Page */}
+        <button className="pagination-button active">{currentPage}</button>
 
-            {/* Next Two Pages */}
-            {currentPage < totalPages && (
-                <button onClick={() => paginate(currentPage + 1)} className="pagination-button">
-                    {currentPage + 1}
-                </button>
-            )}
-            {currentPage < totalPages - 1 && (
-                <button onClick={() => paginate(currentPage + 2)} className="pagination-button">
-                    {currentPage + 2}
-                </button>
-            )}
+        {/* Next Two Pages */}
+        {currentPage < totalPages && (
+          <button onClick={() => paginate(currentPage + 1)} className="pagination-button">
+            {currentPage + 1}
+          </button>
+        )}
+        {currentPage < totalPages - 1 && (
+          <button onClick={() => paginate(currentPage + 2)} className="pagination-button">
+            {currentPage + 2}
+          </button>
+        )}
 
-            {/* Next Page Button */}
-            <button onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} className="pagination-button">
-            <FaAngleRight />
-            </button>
+        {/* Next Page Button */}
+        <button onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} className="pagination-button">
+          <FaAngleRight />
+        </button>
 
-            {/* Last Page Button */}
-            <button onClick={() => paginate(totalPages)} disabled={currentPage === totalPages} className="pagination-button">
-            <FaAngleDoubleRight />
-            </button>
-        </div>
+        {/* Last Page Button */}
+        <button onClick={() => paginate(totalPages)} disabled={currentPage === totalPages} className="pagination-button">
+          <FaAngleDoubleRight />
+        </button>
+      </div>
     </div>
   );
 }

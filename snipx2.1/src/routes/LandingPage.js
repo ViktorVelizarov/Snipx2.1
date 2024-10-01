@@ -6,6 +6,7 @@ import 'react-calendar/dist/Calendar.css';
 import './LandingPage.css';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
+import 'chartjs-plugin-trendline';
 
 const Home = () => {
   const { user } = useAuth();
@@ -17,6 +18,9 @@ const Home = () => {
     datasets: [],
   });
   const [overviewData, setOverviewData] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [userSkills, setUserSkills] = useState({});
+  const [showTrendline, setShowTrendline] = useState(false); // State to toggle trendline
   const chartRef = useRef(null);
   const [snippets, setSnippets] = useState([]);
   const navigate = useNavigate();
@@ -39,6 +43,7 @@ const Home = () => {
 
     if (user && user.id) {
       fetchAllSnippets();
+      fetchUserSkills(user.id); // Fetch user skills
     }
   }, [user]);
 
@@ -49,15 +54,24 @@ const Home = () => {
     if (chartRef.current) {
       chartRef.current.update(); // Force update on chart when dark mode changes
     }
-  }, [selectedDate, snippets, isDarkMode]);
+  }, [selectedDate, snippets, isDarkMode, showTrendline]); // Add showTrendline to dependencies
 
-/*
-  useEffect(() => {
-    if (chartRef.current) {
-      chartRef.current.update();
+  const fetchUserSkills = async (userId) => {
+    try {
+      const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`, {
+        headers: { "Authorization": `Bearer ${user.token}` },
+      });
+      const userSkillsData = response.data.reduce((acc, rating) => {
+        if (rating.skill && rating.skill.id) {
+          acc[rating.skill.skill_name] = rating.score;
+        }
+        return acc;
+      }, {});
+      setUserSkills(userSkillsData);
+    } catch (error) {
+      console.error("Error fetching user skills:", error);
     }
-  }, [isDarkMode]);  
-*/
+  };
 
   const chartOptions = {
     responsive: true,
@@ -108,76 +122,64 @@ const Home = () => {
     }
   };
 
-  const handleDrop = (event) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDragOver = (event) => {
-    event.preventDefault();
-  };
-
-  const handleSavePicture = async () => {
-    if (!imageFile) {
-      console.error("No image file selected.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('userId', user.id);
-    formData.append('profilePicture', imageFile);
-
-    try {
-      await axios.post("https://extension-360407.lm.r.appspot.com/api/uploadProfilePicture", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      // Update user profile picture URL (you may need to refetch the user data here)
-      const updatedUser = { ...user, profilePictureUrl: URL.createObjectURL(imageFile) };
-      // Assuming there's a function to update user context
-      // updateUserContext(updatedUser);
-
-      setIsPopupOpen(false);
-    } catch (error) {
-      console.error("Error updating profile picture:", error);
-    }
-  };
-
   const updateChartData = (filteredSnippets) => {
     const sortedSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
-    const scores = sortedSnippets.map(snippet => snippet.score);
+    const scores = sortedSnippets.map(snippet => parseFloat(snippet.score)); // Convert string scores to numbers
     const labels = sortedSnippets.map(snippet => new Date(snippet.date).toLocaleDateString());
-
+  
+    const datasets = [
+      {
+        label: 'Sentiment Scores',
+        data: scores,
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--graph-line-color').trim(),
+        backgroundColor: 'rgba(228, 39, 125, 0.2)',
+      },
+    ];
+  
+    // Calculate Linear Regression if trendline is enabled
+    if (showTrendline) {
+      const trendlinePoints = calculateLinearRegression(scores);
+  
+      datasets.push({
+        label: 'Trendline',
+        data: trendlinePoints, // Add trendline points to the chart
+        borderColor: 'rgba(0, 123, 255, 0.75)', // Blue for trendline
+        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+        type: 'line',
+        fill: false,
+      });
+    }
+  
     const newChartData = {
       labels,
-      datasets: [
-        {
-          label: 'Sentiment Scores',
-          data: scores,
-          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--graph-line-color').trim(),
-          backgroundColor: 'rgba(228, 39, 125, 0.2)',
-        },
-      ],
+      datasets,
     };
-
+  
     setChartData(newChartData);
     calculateAverageScore(scores);
     updateOverviewData(sortedSnippets);
-
+  
     if (chartRef.current) {
       chartRef.current.update();
     }
   };
+  
+  // Helper function to calculate linear regression trendline
+  const calculateLinearRegression = (data) => {
+    const N = data.length;
+    const xSum = (N * (N - 1)) / 2; // Sum of indexes 0, 1, 2...N-1
+    const ySum = data.reduce((acc, y) => acc + parseFloat(y), 0); // Convert y to number, then sum
+    const xySum = data.reduce((acc, y, x) => acc + x * parseFloat(y), 0); // Convert y to number, then sum of x * y
+    const xSqSum = (N * (N - 1) * (2 * N - 1)) / 6; // Sum of squares of indexes 0^2, 1^2, 2^2...N-1^2
+  
+    // Calculate slope (m) and intercept (b)
+    const m = (N * xySum - xSum * ySum) / (N * xSqSum - xSum ** 2);
+    const b = (ySum - m * xSum) / N;
+  
+    // Generate the y-values for the trendline
+    return data.map((_, x) => m * x + b);
+  };
+  
 
   const filterSnippetsBySelectedRange = (selectedDate) => {
     const today = new Date();
@@ -221,17 +223,18 @@ const Home = () => {
       green: snippet.green || 'N/A',
       orange: snippet.orange || 'N/A',
       red: snippet.red || 'N/A',
+      actionText: snippet.action_text || 'No action provided',
     })).reverse();
 
     setOverviewData(overviewData);
   };
 
-  const handleChartClick = () => {
-    navigate('/graphs');
-  };
-
   const handleDateChange = (date) => {
     setSelectedDate(date);
+  };
+
+  const toggleTrendline = () => {
+    setShowTrendline(!showTrendline);
   };
 
   return (
@@ -268,8 +271,8 @@ const Home = () => {
             <h2>Upload New Profile Picture</h2>
             <div
               className="upload-area"
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
+              onDrop={handleImageUpload}
+              onDragOver={(e) => e.preventDefault()}
             >
               {selectedImage ? (
                 <img src={selectedImage} alt="Selected" className="preview-image" />
@@ -284,7 +287,9 @@ const Home = () => {
               style={{ display: 'none' }}
               id="file-upload"
             />
-            <button onClick={handleSavePicture}>Save</button>
+            <button onClick={() => document.getElementById('file-upload').click()}>
+              Upload Image
+            </button>
             <button onClick={() => setIsPopupOpen(false)}>Cancel</button>
           </div>
         </div>
@@ -300,6 +305,7 @@ const Home = () => {
                 <th>Green</th>
                 <th>Yellow</th>
                 <th>Red</th>
+                <th>Actions for next day</th>
               </tr>
             </thead>
             <tbody>
@@ -309,6 +315,7 @@ const Home = () => {
                   <td>{row.green}</td>
                   <td>{row.orange}</td>
                   <td>{row.red}</td>
+                  <td>{row.actionText}</td>
                 </tr>
               ))}
             </tbody>
@@ -316,22 +323,47 @@ const Home = () => {
         </div>
       </div>
 
-      <div onClick={handleChartClick} style={{ cursor: 'pointer' }} className="analysis-section">
+      <div className="analysis-section">
         <h2>Sentiment Analysis</h2>
         <Line
           className="sentiment-analysis-graph"
           data={chartData}
           options={chartOptions}
           ref={chartRef}
-          onClick={handleChartClick}
         />
-        <div className="average-score">
-          <div className="circle">{averageScore}</div>
+        <div className="average-score-container">
+          <div className="average-score">
+            <div className="circle">{averageScore}</div>
+          </div>
+          <button onClick={toggleTrendline} className="toggle-trendline-button">
+            {showTrendline ? 'Hide' : 'Show'} Trendline
+          </button>
         </div>
+
       </div>
 
       <div className="calendar-section">
         <Calendar onChange={handleDateChange} value={selectedDate} />
+      </div>
+      
+      <div className="skills-section">
+        <h2>User Skills</h2>
+        <table className="skills-table">
+          <thead>
+            <tr>
+              <th>Skill Name</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(userSkills).map((skill, index) => (
+              <tr key={index}>
+                <td>{skill}</td>
+                <td>{userSkills[skill] || 'No rating'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
