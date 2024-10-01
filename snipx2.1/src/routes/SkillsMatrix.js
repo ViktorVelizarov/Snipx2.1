@@ -25,6 +25,7 @@ const SkillsMatrix = () => {
     const [selectedScores, setSelectedScores] = useState([1, 2, 3, 4, 5]);
     const [skillSearchTerm, setSkillSearchTerm] = useState(''); // State for skill search
 
+    console.log("users:", users)
     
     useEffect(() => {
         if (user) {

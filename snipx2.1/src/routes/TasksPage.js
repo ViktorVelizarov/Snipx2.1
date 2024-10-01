@@ -16,6 +16,7 @@ const TaskManagement = () => {
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskType, setNewTaskType] = useState('');
+  const [newTaskEndsAt, setNewTaskEndsAt] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Fetch the company ID of the logged-in user
@@ -90,7 +91,7 @@ const TaskManagement = () => {
 
   // Handle new task creation
   const createTask = async () => {
-    if (!newTaskName || !companyId) {
+    if (!newTaskName || !companyId || !newTaskEndsAt) {
       alert('Task name and company ID are required.');
       return;
     }
@@ -104,6 +105,7 @@ const TaskManagement = () => {
           task_description: newTaskDesc,
           task_type: newTaskType,
           company_id: companyId,
+          endsAt: newTaskEndsAt,
         },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -112,6 +114,7 @@ const TaskManagement = () => {
       setNewTaskName('');
       setNewTaskDesc('');
       setNewTaskType('');
+      setNewTaskEndsAt('');
 
       // Refresh the task list after creating a new task
       const updatedTasks = await axios.get(`https://extension-360407.lm.r.appspot.com/tasks/${companyId}`, {
@@ -247,7 +250,7 @@ const TaskManagement = () => {
                         value={user.id} 
                         disabled={isAssigned} // Disable option if the user is already assigned
                       >
-                        {user.name} {isAssigned ? '(Already Assigned)' : ''}
+                        {user.email} {isAssigned ? '(Already Assigned)' : ''}
                       </option>
                     );
                   })}
@@ -268,7 +271,7 @@ const TaskManagement = () => {
                         value={skill.id} 
                         disabled={isAssigned} // Disable option if the skill is already assigned
                       >
-                        {skill.name} {isAssigned ? '(Already Assigned)' : ''}
+                       <h1> {skill.skill_name} {isAssigned ? '(Already Assigned)' : ''} </h1> 
                       </option>
                     );
                   })}
@@ -306,6 +309,12 @@ const TaskManagement = () => {
           placeholder="Task Type" 
           value={newTaskType} 
           onChange={(e) => setNewTaskType(e.target.value)} 
+        />
+         <input 
+          type="datetime-local" 
+          placeholder="Ends At (e.g., 2024-09-29T10:00:05Z)" 
+          value={newTaskEndsAt} 
+          onChange={(e) => setNewTaskEndsAt(e.target.value)} 
         />
         <button onClick={createTask} disabled={loading}>{loading ? 'Creating...' : 'Create Task'}</button>
       </div>

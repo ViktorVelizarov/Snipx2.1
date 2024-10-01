@@ -86,8 +86,8 @@ function UserSkillHoursAndNotifications() {
                         {userSkillHours.map((record) => (
                             <tr key={record.id}>
                                 <td>{record.id}</td>
-                                <td>{record.user_id}</td>
-                                <td>{record.skill_id}</td>
+                                <td>{record.user.email}</td>
+                                <td>{record.skill.skill_name}</td>
                                 <td>{record.hours}</td>
                             </tr>
                         ))}
@@ -104,7 +104,6 @@ function UserSkillHoursAndNotifications() {
                             <th>ID</th>
                             <th>User ID</th>
                             <th>Skill ID</th>
-                            <th>Approved</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -112,9 +111,8 @@ function UserSkillHoursAndNotifications() {
                         {notifications.map((notification) => (
                             <tr key={notification.id}>
                                 <td>{notification.id}</td>
-                                <td>{notification.user_id}</td>
-                                <td>{notification.skill_id}</td>
-                                <td>{notification.approved ? 'Yes' : 'No'}</td>
+                                <td>{notification.user.email}</td>
+                                <td>{notification.skill.skill_name}</td>
                                 <td>
                                     {!notification.approved && (
                                         <button 
