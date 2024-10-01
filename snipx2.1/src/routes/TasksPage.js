@@ -73,21 +73,34 @@ const TaskManagement = () => {
     }
   }, [companyId, user]);
 
-  // Fetch skills that are not associated with a company
   useEffect(() => {
     const fetchSkills = async () => {
       try {
-        const response = await axios.get('https://extension-360407.lm.r.appspot.com/api/skills-no-company', {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        setSkills(response.data);
+        // Fetch skills that are not associated with a company
+        const skillsNoCompanyResponse = await axios.get(
+          'https://extension-360407.lm.r.appspot.com/api/skills-no-company',
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+
+        // Fetch skills that are associated with the user's company
+        const companySkillsResponse = await axios.get(
+          `https://extension-360407.lm.r.appspot.com/api/skills/${companyId}`,
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+
+        // Combine skills from both responses
+        const combinedSkills = [...skillsNoCompanyResponse.data, ...companySkillsResponse.data];
+        
+        // Set the combined skills
+        setSkills(combinedSkills);
       } catch (error) {
         console.error('Error fetching skills:', error);
       }
     };
-
+  
     fetchSkills();
-  }, [user]);
+  }, [companyId, user]);
+  
 
   // Handle new task creation
   const createTask = async () => {
