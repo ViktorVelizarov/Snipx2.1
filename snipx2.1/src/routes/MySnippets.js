@@ -21,8 +21,8 @@ function MySnippets() {
     orange: "",
     red: "",
     explanations: "",
+    action_text: "", // Add action_text to state
   });
-console.log("Snippets data:", snippets)
 
   // Separate refs for each textarea
   const textRef = useRef([]);
@@ -30,6 +30,7 @@ console.log("Snippets data:", snippets)
   const orangeRef = useRef([]);
   const redRef = useRef([]);
   const explanationsRef = useRef([]);
+  const actionTextRef = useRef([]); // Add ref for action_text
 
   useEffect(() => {
     const fetchSnippets = async () => {
@@ -74,6 +75,7 @@ console.log("Snippets data:", snippets)
       orange: snippet.orange || "",
       red: snippet.red || "",
       explanations: snippet.explanations || "",
+      action_text: snippet.action_text || "", // Add action_text to edit mode
     });
   };
 
@@ -107,7 +109,7 @@ console.log("Snippets data:", snippets)
   };
 
   const resizeAllTextAreas = () => {
-    [textRef, greenRef, orangeRef, redRef, explanationsRef].forEach(refGroup => {
+    [textRef, greenRef, orangeRef, redRef, explanationsRef, actionTextRef].forEach(refGroup => {
       refGroup.current.forEach(textarea => {
         if (textarea) {
           textarea.style.height = "auto";
@@ -149,6 +151,7 @@ console.log("Snippets data:", snippets)
               <th><FontAwesomeIcon icon={faFlag} style={{ color: 'orange'}} /></th>
               <th><FontAwesomeIcon icon={faFlag} style={{ color: 'red'}} /></th>
               <th>Explanations</th>
+              <th>Actions for Next Day</th> {/* New column for action_text */}
               <th>Actions</th>
             </tr>
           </thead>
@@ -238,6 +241,18 @@ console.log("Snippets data:", snippets)
                     />
                   ) : (
                     snippet.explanations || ""
+                  )}
+                </td>
+                <td>
+                  {editingSnippetId === snippet.id ? (
+                    <textarea
+                      ref={el => (actionTextRef.current[index] = el)} // Add ref for action_text
+                      value={editingSnippet.action_text}
+                      onChange={(e) => setEditingSnippet({ ...editingSnippet, action_text: e.target.value })}
+                      className="edit-box"
+                    />
+                  ) : (
+                    snippet.action_text || "No action provided" // Show action_text or default
                   )}
                 </td>
                 <td className="py-2 px-4 flex space-x-2">
