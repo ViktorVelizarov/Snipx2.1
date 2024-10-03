@@ -22,9 +22,9 @@ const SkillsMatrix = () => {
 
     // State for filters
     const [selectedSkills, setSelectedSkills] = useState([]);
-    const [selectedScores, setSelectedScores] = useState([1, 2, 3, 4, 5]);
+    const [selectedScores, setSelectedScores] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     const [skillSearchTerm, setSkillSearchTerm] = useState(''); // State for skill search
-
+    
     console.log("users:", users)
     
     useEffect(() => {
@@ -355,7 +355,7 @@ const SkillsMatrix = () => {
                         <label>Filter Scores:</label>
                         {/* Custom Multi-Select for Scores */}
                         <div className="multi-select">
-                            {[1, 2, 3, 4, 5].map(score => (
+                            {[1, 2, 3, 4, 5, 6 , 7, 8, 9, 10].map(score => (
                                 <div
                                     key={score}
                                     className={`multi-select-item ${selectedScores.includes(score) ? 'selected' : ''}`}
@@ -457,7 +457,7 @@ const SkillsMatrix = () => {
                                                 handleUserSkillChange(user.id, skill.id, e.target.value)
                                             }
                                             min="1"
-                                            max="5"
+                                            max="10"
                                             style={{ width: '50px', textAlign: 'center' }}
                                         />
                                     </td>
