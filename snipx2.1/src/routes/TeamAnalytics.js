@@ -39,10 +39,9 @@ const TeamAnalytics = () => {
     const [users, setUsers] = useState([]);
     const [skills, setSkills] = useState([]);
     const [userSkillsWithRatings, setUserSkillsWithRatings] = useState([]);
-    const [snippets, setSnippets] = useState([]);
     const [filteredSnippets, setFilteredSnippets] = useState([]);
     const [selectedEntity, setSelectedEntity] = useState(null);
-    const [selectedEntityType, setSelectedEntityType] = useState('teams'); // Default to 'teams'
+    const [selectedEntityType, setSelectedEntityType] = useState('teams');
     const [selectedTimePeriod, setSelectedTimePeriod] = useState('Last week');
     const [customDateRange, setCustomDateRange] = useState([new Date(), new Date()]);
     const [showCalendar, setShowCalendar] = useState(false);
@@ -66,6 +65,9 @@ const TeamAnalytics = () => {
         ],
     };
 
+    // Request tracking variable to prevent stale state updates
+    let fetchId = useRef(0);
+
     useEffect(() => {
         if (user) {
             fetchCompanyId();
@@ -82,6 +84,7 @@ const TeamAnalytics = () => {
 
     useEffect(() => {
         if (selectedEntity) {
+            setFilteredSnippets([]); // Clear previous data while fetching new data
             fetchSnippets();
             fetchUserSkills(selectedEntity.id);
         }
@@ -161,33 +164,39 @@ const TeamAnalytics = () => {
     };
 
     const fetchSnippets = async () => {
+        const currentFetchId = ++fetchId.current; // Increment fetch ID for each new request
         try {
             if (selectedEntityType === 'teams') {
-                fetchTeamSnippets(selectedEntity.id);
+                await fetchTeamSnippets(selectedEntity.id, currentFetchId);
             } else if (selectedEntityType === 'users') {
-                fetchUserSnippets(selectedEntity.id);
+                await fetchUserSnippets(selectedEntity.id, currentFetchId);
             }
         } catch (error) {
             console.error("Error fetching snippets:", error);
         }
     };
 
-    const fetchUserSnippets = async (userId) => {
+    const fetchUserSnippets = async (userId, currentFetchId) => {
         try {
             const response = await axios.post(`https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`, {
                 id: userId
             }, {
                 headers: { "Authorization": `Bearer ${user.token}` }
             });
+
             const filteredSnippets = filterSnippetsByTime(response.data);
-            setFilteredSnippets(filteredSnippets);
-            setIsDataReady(true);
+            
+            // Ensure only the latest request updates the state
+            if (currentFetchId === fetchId.current) {
+                setFilteredSnippets(filteredSnippets);
+                setIsDataReady(true);
+            }
         } catch (error) {
             console.error("Error fetching user snippets:", error);
         }
     };
 
-    const fetchTeamSnippets = async (teamId) => {
+    const fetchTeamSnippets = async (teamId, currentFetchId) => {
         try {
             const teamMembers = users.filter(user => user.teamId === teamId);
             let allSnippets = [];
@@ -220,11 +229,12 @@ const TeamAnalytics = () => {
             }));
 
             const sortedSnippets = teamSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
-
             const filteredSnippets = filterSnippetsByTime(sortedSnippets);
 
-            setFilteredSnippets(filteredSnippets);
-            setIsDataReady(true);
+            if (currentFetchId === fetchId.current) {
+                setFilteredSnippets(filteredSnippets);
+                setIsDataReady(true);
+            }
         } catch (error) {
             console.error("Error fetching team snippets:", error);
         }
@@ -356,7 +366,7 @@ const TeamAnalytics = () => {
     const handleEntityTypeChange = (type) => {
         setSelectedEntityType(type);
         setSelectedEntity(null);
-        setFilteredSnippets([]);  // Clear snippets when switching entity types
+        setFilteredSnippets([]);
     };
 
     const handleTeamSelection = (e) => {
@@ -373,16 +383,16 @@ const TeamAnalytics = () => {
         setSelectedTimePeriod(value);
         setShowCalendar(value === 'Calendar');
         if (selectedEntity && value !== 'Calendar') {
-            setFilteredSnippets([]);  // Clear the existing snippets before fetching new data
-            fetchSnippets(); // Fetch new data when time period changes
+            setFilteredSnippets([]);
+            fetchSnippets();
         }
     };
 
     const onCalendarChange = (dateRange) => {
         setCustomDateRange(dateRange);
         if (selectedEntity) {
-            setFilteredSnippets([]);  // Clear the existing snippets before fetching new data
-            fetchSnippets(); // Fetch new data based on calendar range
+            setFilteredSnippets([]);
+            fetchSnippets();
         }
     };
 

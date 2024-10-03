@@ -59,19 +59,27 @@ const Home = () => {
   const fetchUserSkills = async (userId) => {
     try {
       const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`, {
-        headers: { "Authorization": `Bearer ${user.token}` },
+        headers: { Authorization: `Bearer ${user.token}` },
       });
+  
       const userSkillsData = response.data.reduce((acc, rating) => {
-        if (rating.skill && rating.skill.id) {
-          acc[rating.skill.skill_name] = rating.score;
+        const { skill, score, created_at } = rating;
+        const date = new Date(created_at).toLocaleDateString();
+  
+        if (!acc[skill.skill_name]) {
+          acc[skill.skill_name] = { data: [], skillName: skill.skill_name };
         }
+  
+        acc[skill.skill_name].data.push({ date, score: parseFloat(score) });
         return acc;
       }, {});
-      setUserSkills(userSkillsData);
+  
+      setSkills(userSkillsData);
     } catch (error) {
       console.error("Error fetching user skills:", error);
     }
   };
+  
 
   const chartOptions = {
     responsive: true,
@@ -85,11 +93,6 @@ const Home = () => {
         display: true,
         text: 'Sentiment Scores Over Time',
         color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-      },
-      tooltip: {
-        bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-        titleColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
       },
     },
     scales: {
@@ -105,6 +108,49 @@ const Home = () => {
       },
     },
   };
+
+  const SkillChart = ({ skillData }) => {
+    const chartData = {
+      labels: skillData.data.map(d => d.date),
+      datasets: [
+        {
+          label: skillData.skillName,
+          data: skillData.data.map(d => d.score),
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+          fill: false,
+        },
+      ],
+    };
+  
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0,
+          max: 11,
+          ticks: {
+            stepSize: 1,
+          },
+        },
+      },
+      plugins: {
+        legend: {
+          display: false, // Hide legend for small graphs
+        },
+      },
+    };
+
+    return (
+      <div className="skill-chart-wrapper">
+        <h4>{skillData.skillName}</h4>
+        <Line data={chartData} options={options}/>
+      </div>
+    );
+  };
+  
 
   const handleProfilePictureClick = () => {
     setIsPopupOpen(true);
@@ -353,6 +399,7 @@ const Home = () => {
             <tr>
               <th>Skill Name</th>
               <th>Score</th>
+              <th>Progress Visualization</th>
             </tr>
           </thead>
           <tbody>
@@ -360,6 +407,13 @@ const Home = () => {
               <tr key={index}>
                 <td>{skill}</td>
                 <td>{userSkills[skill] || 'No rating'}</td>
+                <td>
+                  <div className="skills-chart-container">
+                    {Object.keys(skills).map((skillName, index) => (
+                      <SkillChart key={index} skillData={skills[skillName]} />
+                    ))}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

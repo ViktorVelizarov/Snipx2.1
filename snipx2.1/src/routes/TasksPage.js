@@ -65,6 +65,7 @@ const TaskManagement = () => {
   useEffect(() => {
     const fetchSkills = async () => {
       try {
+        // Fetch skills that are not associated with a company
         const skillsNoCompanyResponse = await axios.get(
           'https://extension-360407.lm.r.appspot.com/api/skills-no-company',
           { headers: { Authorization: `Bearer ${user.token}` } }

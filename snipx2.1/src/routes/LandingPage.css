@@ -233,11 +233,23 @@
   border-radius: 10px;
 }
 
-button {
-  padding: 10px 20px;
-  margin: 10px;
-  border: none;
+.skills-chart-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.skill-chart-wrapper {
+  background-color: rgba(255, 255, 255, 0.1);
+  height: 150px;
+  width: 300px;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.skill-chart-wrapper h4 {
+  font-size: 16px;
+  margin-bottom: 8px;
   color: white;
-  border-radius: 5px;
-  cursor: pointer;
 }

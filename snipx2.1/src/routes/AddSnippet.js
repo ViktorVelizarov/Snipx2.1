@@ -94,7 +94,7 @@ const Snippets = () => {
             snipx_user_id: user.id,
             type: "daily",
             inputText,
-            action: actionText, // Include the action in the payload
+            action: actionText, 
             date: currentDate,
             green: results.green,
             orange: results.orange,
