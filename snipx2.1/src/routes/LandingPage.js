@@ -56,29 +56,63 @@ const Home = () => {
     }
   }, [selectedDate, snippets, isDarkMode, showTrendline]); // Add showTrendline to dependencies
 
+
   const fetchUserSkills = async (userId) => {
+    const skillCache = {}; // Cache for storing full skill details
+    
+    const fetchSkillDetails = async (skillId) => {
+      if (skillCache[skillId]) {
+        return skillCache[skillId]; // Return from cache if already fetched
+      }
+      try {
+        const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/skills/${skillId}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        skillCache[skillId] = response.data; // Store skill details in cache
+        return response.data;
+      } catch (error) {
+        console.error(`Error fetching skill details for skill ID: ${skillId}`, error);
+        return { skill_name: 'undefined' }; // Return 'undefined' if there's an error
+      }
+    };
+  
     try {
       const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
   
-      const userSkillsData = response.data.reduce((acc, rating) => {
+      console.log("Fetched user skills:", response.data); // Log fetched user skills
+  
+      const userSkillsData = await response.data.reduce(async (accPromise, rating) => {
+        const acc = await accPromise;
         const { skill, score, created_at } = rating;
         const date = new Date(created_at).toLocaleDateString();
   
-        if (!acc[skill.skill_name]) {
-          acc[skill.skill_name] = { data: [], skillName: skill.skill_name };
+        let skillName = 'undefined';
+        if (skill && skill.skill_name) {
+          skillName = skill.skill_name;
+        } else if (skill) {
+          const fullSkill = await fetchSkillDetails(skill.id);
+          skillName = fullSkill.skill_name || 'undefined';
         }
   
-        acc[skill.skill_name].data.push({ date, score: parseFloat(score) });
+        if (!acc[skillName]) {
+          acc[skillName] = { data: [], skillName: skillName };
+        }
+  
+        acc[skillName].data.push({ date, score: parseFloat(score) });
+  
         return acc;
-      }, {});
+      }, Promise.resolve({}));
   
       setSkills(userSkillsData);
+      console.log("Processed user skills data:", userSkillsData); // Log processed user skills
     } catch (error) {
       console.error("Error fetching user skills:", error);
     }
   };
+  
+  
   
 
   const chartOptions = {
@@ -109,7 +143,12 @@ const Home = () => {
     },
   };
 
+
   const SkillChart = ({ skillData }) => {
+    if (!skillData || skillData.data.length === 0) {
+      return <p>No data available for this skill.</p>; // Fallback for missing data
+    }
+  
     const chartData = {
       labels: skillData.data.map(d => d.date),
       datasets: [
@@ -138,15 +177,15 @@ const Home = () => {
       },
       plugins: {
         legend: {
-          display: false, // Hide legend for small graphs
+          display: false,
         },
       },
     };
-
+  
     return (
       <div className="skill-chart-wrapper">
-        <h4>{skillData.skillName}</h4>
-        <Line data={chartData} options={options}/>
+        <h4>{skillData.skillName || 'Undefined Skill'}</h4>
+        <Line data={chartData} options={options} />
       </div>
     );
   };
@@ -403,15 +442,13 @@ const Home = () => {
             </tr>
           </thead>
           <tbody>
-            {Object.keys(userSkills).map((skill, index) => (
+            {Object.keys(skills).map((skillName, index) => (
               <tr key={index}>
-                <td>{skill}</td>
-                <td>{userSkills[skill] || 'No rating'}</td>
+                <td>{skillName !== 'undefined' ? skillName : 'Unknown Skill'}</td>
+                <td>{skills[skillName]?.data?.[0]?.score || 'No rating'}</td> {/* Show the first score as an example */}
                 <td>
                   <div className="skills-chart-container">
-                    {Object.keys(skills).map((skillName, index) => (
-                      <SkillChart key={index} skillData={skills[skillName]} />
-                    ))}
+                    <SkillChart key={index} skillData={skills[skillName]} />
                   </div>
                 </td>
               </tr>
