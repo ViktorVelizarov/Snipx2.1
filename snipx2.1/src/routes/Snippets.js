@@ -3,8 +3,11 @@ import { FaAngleDoubleLeft, FaAngleDoubleRight, FaAngleLeft, FaAngleRight } from
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import './Snippets.css';
+import { useAuth } from "../AuthProvider";
+import axios from 'axios';
 
 function Snippets() {
+  const { user } = useAuth();
   const [snippets, setSnippets] = useState([]);
   const [users, setUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,6 +26,9 @@ function Snippets() {
     sentiment: "",
     action_text: "", // Added action_text field
   });
+
+  console.log("snippets:", snippets)
+  console.log("users", users)
 
   // Separate refs for each textarea
   const textRef = useRef([]);
@@ -47,9 +53,8 @@ function Snippets() {
 
     const fetchUsers = async () => {
       try {
-        const response = await fetch("https://extension-360407.lm.r.appspot.com/api/snipx_users");
-        const data = await response.json();
-        setUsers(data);
+          const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_users", user);
+          setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
