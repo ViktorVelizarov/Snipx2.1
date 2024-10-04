@@ -89,3 +89,84 @@ td {
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
+
+/* Center the profile picture and make it bigger */
+.profile-pic-container {
+    text-align: center;
+  }
+  
+/* Profile Picture Styling */
+.profile-pic {
+    background-size: cover;
+    background-position: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin: 0 auto;
+    }
+    
+/* Placeholder for missing profile pictures */
+.profile-pic-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #ccc;
+    margin: 0 auto;
+    }
+
+
+/* Tooltip styling */
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .tooltip-text {
+    position: absolute;
+    top: 50%;
+    left: 110%; /* Position the tooltip to the right of the image */
+    transform: translateY(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 1000;
+    max-width: 300px;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+  
+  /* Show the tooltip on hover */
+  .tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  /* Tooltip arrow */
+  .tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -5px;
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #333 transparent transparent;
+  }
+  
+  /* Adjust positioning if tooltip goes out of view on the left */
+  .tooltip-container.tooltip-left .tooltip-text {
+    left: auto;
+    right: 110%; /* Show tooltip on the left if needed */
+  }
+  
+  .tooltip-container.tooltip-left .tooltip-text::after {
+    left: auto;
+    right: -5px;
+    border-color: transparent transparent transparent #333;
+  }

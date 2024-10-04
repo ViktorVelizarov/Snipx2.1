@@ -24,13 +24,12 @@ function MySnippets() {
     action_text: "", // Add action_text to state
   });
 
-  // Separate refs for each textarea
   const textRef = useRef([]);
   const greenRef = useRef([]);
   const orangeRef = useRef([]);
   const redRef = useRef([]);
   const explanationsRef = useRef([]);
-  const actionTextRef = useRef([]); // Add ref for action_text
+  const actionTextRef = useRef([]);
 
   useEffect(() => {
     const fetchSnippets = async () => {
@@ -119,11 +118,18 @@ function MySnippets() {
     });
   };
 
+  const getUserEmail = (userId) => {
+    return user ? user.email : "None";
+  };
+
+  const getUserProfilePicture = () => {
+    return user?.profilePictureUrl || '';
+  };
+
   // Calculate pagination details
   const indexOfLastSnippet = currentPage * snippetsPerPage;
   const indexOfFirstSnippet = indexOfLastSnippet - snippetsPerPage;
   const currentSnippets = snippets.slice(indexOfFirstSnippet, indexOfLastSnippet);
-
   const totalPages = Math.ceil(snippets.length / snippetsPerPage);
 
   const paginate = (pageNumber) => {
@@ -143,6 +149,7 @@ function MySnippets() {
         <table className="snippets-table">
           <thead>
             <tr>
+              <th>Profile Picture</th> {/* Add profile picture column */}
               <th>ID</th>
               <th>Type</th>
               <th>Date</th>
@@ -158,6 +165,18 @@ function MySnippets() {
           <tbody>
             {currentSnippets.map((snippet, index) => (
               <tr key={snippet.id}>
+                <td>
+                  <div className="profile-container"> {/* Smaller container */}
+                    <div className="tooltip-container">
+                      <img
+                        src={`data:image/png;base64,${getUserProfilePicture()}`}
+                        alt="Profile"
+                        className="profile-picture"
+                      />
+                      <span className="tooltip-text">{getUserEmail(snippet.user_id)}</span>
+                    </div>
+                  </div>
+                </td> {/* Profile picture column */}
                 <td>{snippet.id}</td>
                 <td>
                   {editingSnippetId === snippet.id ? (

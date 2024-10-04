@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -10,21 +9,16 @@ import 'chartjs-plugin-trendline';
 
 const Home = () => {
   const { user } = useAuth();
-  const { isDarkMode } = useOutletContext();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [averageScore, setAverageScore] = useState(7.4);
-  const [chartData, setChartData] = useState({
-    labels: [],
-    datasets: [],
-  });
+  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
   const [overviewData, setOverviewData] = useState([]);
   const [skills, setSkills] = useState([]);
   const [userSkills, setUserSkills] = useState({});
-  const [showTrendline, setShowTrendline] = useState(false); // State to toggle trendline
+  const [showTrendline, setShowTrendline] = useState(false);
   const chartRef = useRef(null);
   const [snippets, setSnippets] = useState([]);
-  const navigate = useNavigate();
-
+  const [managedSnippets, setManagedSnippets] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -32,62 +26,68 @@ const Home = () => {
   useEffect(() => {
     const fetchAllSnippets = async () => {
       try {
-        const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user", {
-          id: user.id,
-        });
-        setSnippets(response.data);
+        const userSnippetsResponse = await axios.post("https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user", { id: user.id });
+        setSnippets(userSnippetsResponse.data);
+
+        if (user.role === 'manager' || user.role === 'admin') {
+          const managedUsersResponse = await axios.post("https://extension-360407.lm.r.appspot.com/api/managed_users", { id: user.id });
+          const managedUsers = managedUsersResponse.data;
+
+          let allManagedSnippets = [];
+          for (const managedUser of managedUsers) {
+            const managedSnippetsResponse = await axios.post("https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user", { id: managedUser.id });
+            allManagedSnippets = [...allManagedSnippets, ...managedSnippetsResponse.data];
+          }
+          setManagedSnippets(allManagedSnippets);
+        }
       } catch (error) {
-        console.error("Error fetching snippets:", error);
+        console.error("Error fetching snippets or managed users' snippets:", error);
       }
     };
 
     if (user && user.id) {
       fetchAllSnippets();
-      fetchUserSkills(user.id); // Fetch user skills
+      fetchUserSkills(user.id);
     }
   }, [user]);
 
   useEffect(() => {
-    const filteredSnippets = filterSnippetsBySelectedRange(selectedDate);
+    const allSnippets = [...snippets, ...managedSnippets];
+    const filteredSnippets = filterSnippetsBySelectedRange(selectedDate, allSnippets);
     updateChartData(filteredSnippets);
 
     if (chartRef.current) {
-      chartRef.current.update(); // Force update on chart when dark mode changes
+      chartRef.current.update();
     }
-  }, [selectedDate, snippets, isDarkMode, showTrendline]); // Add showTrendline to dependencies
-
+  }, [selectedDate, snippets, managedSnippets, showTrendline]);
 
   const fetchUserSkills = async (userId) => {
-    const skillCache = {}; // Cache for storing full skill details
-    
+    const skillCache = {};
+
     const fetchSkillDetails = async (skillId) => {
-      if (skillCache[skillId]) {
-        return skillCache[skillId]; // Return from cache if already fetched
-      }
+      if (skillCache[skillId]) return skillCache[skillId];
       try {
         const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/skills/${skillId}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        skillCache[skillId] = response.data; // Store skill details in cache
+        skillCache[skillId] = response.data;
         return response.data;
       } catch (error) {
         console.error(`Error fetching skill details for skill ID: ${skillId}`, error);
-        return { skill_name: 'undefined' }; // Return 'undefined' if there's an error
+        return { skill_name: 'undefined' };
       }
     };
-  
+
     try {
       const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-  
-      console.log("Fetched user skills:", response.data); // Log fetched user skills
-  
+
       const userSkillsData = await response.data.reduce(async (accPromise, rating) => {
         const acc = await accPromise;
         const { skill, score, created_at } = rating;
         const date = new Date(created_at).toLocaleDateString();
-  
+
         let skillName = 'undefined';
         if (skill && skill.skill_name) {
           skillName = skill.skill_name;
@@ -95,178 +95,23 @@ const Home = () => {
           const fullSkill = await fetchSkillDetails(skill.id);
           skillName = fullSkill.skill_name || 'undefined';
         }
-  
+
         if (!acc[skillName]) {
           acc[skillName] = { data: [], skillName: skillName };
         }
-  
+
         acc[skillName].data.push({ date, score: parseFloat(score) });
-  
+
         return acc;
       }, Promise.resolve({}));
-  
+
       setSkills(userSkillsData);
-      console.log("Processed user skills data:", userSkillsData); // Log processed user skills
     } catch (error) {
       console.error("Error fetching user skills:", error);
     }
   };
-  
-  
-  
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        labels: {
-          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-        },
-      },
-      title: {
-        display: true,
-        text: 'Sentiment Scores Over Time',
-        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-        },
-      },
-      y: {
-        ticks: {
-          color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-        },
-      },
-    },
-  };
-
-
-  const SkillChart = ({ skillData }) => {
-    if (!skillData || skillData.data.length === 0) {
-      return <p>No data available for this skill.</p>; // Fallback for missing data
-    }
-  
-    const chartData = {
-      labels: skillData.data.map(d => d.date),
-      datasets: [
-        {
-          label: skillData.skillName,
-          data: skillData.data.map(d => d.score),
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 1,
-          fill: false,
-        },
-      ],
-    };
-  
-    const options = {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          min: 0,
-          max: 11,
-          ticks: {
-            stepSize: 1,
-          },
-        },
-      },
-      plugins: {
-        legend: {
-          display: false,
-        },
-      },
-    };
-  
-    return (
-      <div className="skill-chart-wrapper">
-        <h4>{skillData.skillName || 'Undefined Skill'}</h4>
-        <Line data={chartData} options={options} />
-      </div>
-    );
-  };
-  
-
-  const handleProfilePictureClick = () => {
-    setIsPopupOpen(true);
-  };
-
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const updateChartData = (filteredSnippets) => {
-    const sortedSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
-    const scores = sortedSnippets.map(snippet => parseFloat(snippet.score)); // Convert string scores to numbers
-    const labels = sortedSnippets.map(snippet => new Date(snippet.date).toLocaleDateString());
-  
-    const datasets = [
-      {
-        label: 'Sentiment Scores',
-        data: scores,
-        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--graph-line-color').trim(),
-        backgroundColor: 'rgba(228, 39, 125, 0.2)',
-      },
-    ];
-  
-    // Calculate Linear Regression if trendline is enabled
-    if (showTrendline) {
-      const trendlinePoints = calculateLinearRegression(scores);
-  
-      datasets.push({
-        label: 'Trendline',
-        data: trendlinePoints, // Add trendline points to the chart
-        borderColor: 'rgba(0, 123, 255, 0.75)', // Blue for trendline
-        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-        type: 'line',
-        fill: false,
-      });
-    }
-  
-    const newChartData = {
-      labels,
-      datasets,
-    };
-  
-    setChartData(newChartData);
-    calculateAverageScore(scores);
-    updateOverviewData(sortedSnippets);
-  
-    if (chartRef.current) {
-      chartRef.current.update();
-    }
-  };
-  
-  // Helper function to calculate linear regression trendline
-  const calculateLinearRegression = (data) => {
-    const N = data.length;
-    const xSum = (N * (N - 1)) / 2; // Sum of indexes 0, 1, 2...N-1
-    const ySum = data.reduce((acc, y) => acc + parseFloat(y), 0); // Convert y to number, then sum
-    const xySum = data.reduce((acc, y, x) => acc + x * parseFloat(y), 0); // Convert y to number, then sum of x * y
-    const xSqSum = (N * (N - 1) * (2 * N - 1)) / 6; // Sum of squares of indexes 0^2, 1^2, 2^2...N-1^2
-  
-    // Calculate slope (m) and intercept (b)
-    const m = (N * xySum - xSum * ySum) / (N * xSqSum - xSum ** 2);
-    const b = (ySum - m * xSum) / N;
-  
-    // Generate the y-values for the trendline
-    return data.map((_, x) => m * x + b);
-  };
-  
-
-  const filterSnippetsBySelectedRange = (selectedDate) => {
+  const filterSnippetsBySelectedRange = (selectedDate, allSnippets) => {
     const today = new Date();
     const selectedDay = new Date(selectedDate);
     let startDayOffset = 3;
@@ -288,12 +133,61 @@ const Home = () => {
     const endDate = new Date(selectedDay);
     endDate.setDate(selectedDay.getDate() + endDayOffset);
 
-    const filteredSnippets = snippets.filter(snippet => {
+    const filteredSnippets = allSnippets.filter(snippet => {
       const snippetDate = new Date(snippet.date);
       return snippetDate >= startDate && snippetDate <= endDate;
     });
 
     return filteredSnippets;
+  };
+
+  const updateChartData = (filteredSnippets) => {
+    const sortedSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const scores = sortedSnippets.map(snippet => parseFloat(snippet.score));
+    const labels = sortedSnippets.map(snippet => new Date(snippet.date).toLocaleDateString());
+
+    const datasets = [
+      {
+        label: 'Sentiment Scores',
+        data: scores,
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--graph-line-color').trim(),
+        backgroundColor: 'rgba(228, 39, 125, 0.2)',
+      },
+    ];
+
+    if (showTrendline) {
+      const trendlinePoints = calculateLinearRegression(scores);
+      datasets.push({
+        label: 'Trendline',
+        data: trendlinePoints,
+        borderColor: 'rgba(0, 123, 255, 0.75)',
+        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+        type: 'line',
+        fill: false,
+      });
+    }
+
+    const newChartData = {
+      labels,
+      datasets,
+    };
+
+    setChartData(newChartData);
+    calculateAverageScore(scores);
+    updateOverviewData(sortedSnippets);
+  };
+
+  const calculateLinearRegression = (data) => {
+    const N = data.length;
+    const xSum = (N * (N - 1)) / 2;
+    const ySum = data.reduce((acc, y) => acc + parseFloat(y), 0);
+    const xySum = data.reduce((acc, y, x) => acc + x * parseFloat(y), 0);
+    const xSqSum = (N * (N - 1) * (2 * N - 1)) / 6;
+
+    const m = (N * xySum - xSum * ySum) / (N * xSqSum - xSum ** 2);
+    const b = (ySum - m * xSum) / N;
+
+    return data.map((_, x) => m * x + b);
   };
 
   const calculateAverageScore = (scores) => {
@@ -312,6 +206,22 @@ const Home = () => {
     })).reverse();
 
     setOverviewData(overviewData);
+  };
+
+  const handleProfilePictureClick = () => {
+    setIsPopupOpen(true);
+  };
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDateChange = (date) => {
@@ -354,11 +264,7 @@ const Home = () => {
         <div className="upload-popup">
           <div className="upload-popup-content">
             <h2>Upload New Profile Picture</h2>
-            <div
-              className="upload-area"
-              onDrop={handleImageUpload}
-              onDragOver={(e) => e.preventDefault()}
-            >
+            <div className="upload-area" onDrop={handleImageUpload} onDragOver={(e) => e.preventDefault()}>
               {selectedImage ? (
                 <img src={selectedImage} alt="Selected" className="preview-image" />
               ) : (
@@ -372,9 +278,7 @@ const Home = () => {
               style={{ display: 'none' }}
               id="file-upload"
             />
-            <button onClick={() => document.getElementById('file-upload').click()}>
-              Upload Image
-            </button>
+            <button onClick={() => document.getElementById('file-upload').click()}>Upload Image</button>
             <button onClick={() => setIsPopupOpen(false)}>Cancel</button>
           </div>
         </div>
@@ -413,7 +317,33 @@ const Home = () => {
         <Line
           className="sentiment-analysis-graph"
           data={chartData}
-          options={chartOptions}
+          options={{
+            responsive: true,
+            plugins: {
+              legend: {
+                labels: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                },
+              },
+              title: {
+                display: true,
+                text: 'Sentiment Scores Over Time',
+                color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+              },
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                },
+              },
+              y: {
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                },
+              },
+            },
+          }}
           ref={chartRef}
         />
         <div className="average-score-container">
@@ -424,13 +354,12 @@ const Home = () => {
             {showTrendline ? 'Hide' : 'Show'} Trendline
           </button>
         </div>
-
       </div>
 
       <div className="calendar-section">
         <Calendar onChange={handleDateChange} value={selectedDate} />
       </div>
-      
+
       <div className="skills-section">
         <h2>User Skills</h2>
         <table className="skills-table">
@@ -445,7 +374,7 @@ const Home = () => {
             {Object.keys(skills).map((skillName, index) => (
               <tr key={index}>
                 <td>{skillName !== 'undefined' ? skillName : 'Unknown Skill'}</td>
-                <td>{skills[skillName]?.data?.[0]?.score || 'No rating'}</td> {/* Show the first score as an example */}
+                <td>{skills[skillName]?.data?.[0]?.score || 'No rating'}</td>
                 <td>
                   <div className="skills-chart-container">
                     <SkillChart key={index} skillData={skills[skillName]} />
@@ -456,6 +385,53 @@ const Home = () => {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+};
+
+// SkillChart Component
+const SkillChart = ({ skillData }) => {
+  if (!skillData || skillData.data.length === 0) {
+    return <p>No data available for this skill.</p>;
+  }
+
+  const chartData = {
+    labels: skillData.data.map(d => d.date),
+    datasets: [
+      {
+        label: skillData.skillName,
+        data: skillData.data.map(d => d.score),
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
+        fill: false,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        min: 0,
+        max: 11,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+  };
+
+  return (
+    <div className="skill-chart-wrapper">
+      <h4>{skillData.skillName}</h4>
+      <Line data={chartData} options={options} />
     </div>
   );
 };
