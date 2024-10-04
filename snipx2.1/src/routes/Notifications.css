@@ -1,66 +1,63 @@
-/* Notifications Page Styling */
+/* Root variables for consistent colors across the app */
 :root {
-    --container-color1: #E4277D;
-    --container-color2: #FFB300;
-    --btn-bg-color : #E4277D;
-    --colored-text : white;
-}
-
-.notifications-container {
+    --colored-text: white;
+    --black-text: #333;
+  }
+  
+  /* General container styling */
+  .container {
     width: 90%;
     margin: 40px auto;
     padding: 20px;
-    background: transparent;
-    color: var(--colored-text);
-}
-
-.page-title {
+    background: none; /* No background color */
+    border: none; /* No borders */
+  }
+  
+  /* Title for the page */
+  .page-title {
+    font-size: 36px;
+    color: var(--colored-text); /* Apply colored-text to the title */
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Table container */
+  .table-container {
+    margin-bottom: 40px;
+    background: none; /* Remove background for the container */
+    padding: 0; /* Remove padding for cleaner look */
+  }
+  
+  /* Table titles */
+  .table-title {
     font-size: 28px;
-    color: #E4277D; /* Update title color */
-    text-align: left;
+    color: var(--colored-text); /* Apply colored-text to table titles */
     margin-bottom: 20px;
-}
-
-.notifications-table {
-    margin-top: 20px;
-}
-
-table {
+    text-align: left; /* Align text to the left */
+  }
+  
+  /* Table styling */
+  table {
     width: 100%;
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-    border-collapse: collapse;
-    border-radius: 20px;
-    overflow: hidden;
-    background-color: white;
-}
-
-th, td {
-    padding: 12px 15px;
+    border-collapse: collapse; /* Ensure no spacing between cells */
+    background: none; /* No background for the table */
+  }
+  
+  table thead {
+    background-color: var(--colored-text); /* Colored header */
+    color: black; /* Dark text for readability */
+  }
+  
+  table th, table td {
+    padding: 12px;
+    border: none; /* Remove borders for a cleaner look */
     text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-th {
-    background-color: #f4f4f4;
-    font-weight: bold;
-    color: #555;
-}
-
-tr:last-child td {
-    border-bottom: none;
-}
-
-.approve-button {
-    background: linear-gradient(45deg, var(--btn-bg-color), var(--container-color2));
-    color: white;
-    padding: 8px 16px;
-    font-size: 14px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.approve-button:hover {
-    background: white;
-    color: var(--container-color2);
-}
+    color: black; /* Apply black-text to the table data */
+  }
+  
+  table tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 1); /* Subtle alternating row color */
+  }
+  

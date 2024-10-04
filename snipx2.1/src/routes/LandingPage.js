@@ -56,22 +56,64 @@ const Home = () => {
     }
   }, [selectedDate, snippets, isDarkMode, showTrendline]); // Add showTrendline to dependencies
 
+
   const fetchUserSkills = async (userId) => {
+    const skillCache = {}; // Cache for storing full skill details
+    
+    const fetchSkillDetails = async (skillId) => {
+      if (skillCache[skillId]) {
+        return skillCache[skillId]; // Return from cache if already fetched
+      }
+      try {
+        const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/skills/${skillId}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        skillCache[skillId] = response.data; // Store skill details in cache
+        return response.data;
+      } catch (error) {
+        console.error(`Error fetching skill details for skill ID: ${skillId}`, error);
+        return { skill_name: 'undefined' }; // Return 'undefined' if there's an error
+      }
+    };
+  
     try {
       const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`, {
-        headers: { "Authorization": `Bearer ${user.token}` },
+        headers: { Authorization: `Bearer ${user.token}` },
       });
-      const userSkillsData = response.data.reduce((acc, rating) => {
-        if (rating.skill && rating.skill.id) {
-          acc[rating.skill.skill_name] = rating.score;
+  
+      console.log("Fetched user skills:", response.data); // Log fetched user skills
+  
+      const userSkillsData = await response.data.reduce(async (accPromise, rating) => {
+        const acc = await accPromise;
+        const { skill, score, created_at } = rating;
+        const date = new Date(created_at).toLocaleDateString();
+  
+        let skillName = 'undefined';
+        if (skill && skill.skill_name) {
+          skillName = skill.skill_name;
+        } else if (skill) {
+          const fullSkill = await fetchSkillDetails(skill.id);
+          skillName = fullSkill.skill_name || 'undefined';
         }
+  
+        if (!acc[skillName]) {
+          acc[skillName] = { data: [], skillName: skillName };
+        }
+  
+        acc[skillName].data.push({ date, score: parseFloat(score) });
+  
         return acc;
-      }, {});
-      setUserSkills(userSkillsData);
+      }, Promise.resolve({}));
+  
+      setSkills(userSkillsData);
+      console.log("Processed user skills data:", userSkillsData); // Log processed user skills
     } catch (error) {
       console.error("Error fetching user skills:", error);
     }
   };
+  
+  
+  
 
   const chartOptions = {
     responsive: true,
@@ -85,11 +127,6 @@ const Home = () => {
         display: true,
         text: 'Sentiment Scores Over Time',
         color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-      },
-      tooltip: {
-        bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-        titleColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
       },
     },
     scales: {
@@ -105,6 +142,54 @@ const Home = () => {
       },
     },
   };
+
+
+  const SkillChart = ({ skillData }) => {
+    if (!skillData || skillData.data.length === 0) {
+      return <p>No data available for this skill.</p>; // Fallback for missing data
+    }
+  
+    const chartData = {
+      labels: skillData.data.map(d => d.date),
+      datasets: [
+        {
+          label: skillData.skillName,
+          data: skillData.data.map(d => d.score),
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+          fill: false,
+        },
+      ],
+    };
+  
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0,
+          max: 11,
+          ticks: {
+            stepSize: 1,
+          },
+        },
+      },
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+    };
+  
+    return (
+      <div className="skill-chart-wrapper">
+        <h4>{skillData.skillName || 'Undefined Skill'}</h4>
+        <Line data={chartData} options={options} />
+      </div>
+    );
+  };
+  
 
   const handleProfilePictureClick = () => {
     setIsPopupOpen(true);
@@ -353,13 +438,19 @@ const Home = () => {
             <tr>
               <th>Skill Name</th>
               <th>Score</th>
+              <th>Progress Visualization</th>
             </tr>
           </thead>
           <tbody>
-            {Object.keys(userSkills).map((skill, index) => (
+            {Object.keys(skills).map((skillName, index) => (
               <tr key={index}>
-                <td>{skill}</td>
-                <td>{userSkills[skill] || 'No rating'}</td>
+                <td>{skillName !== 'undefined' ? skillName : 'Unknown Skill'}</td>
+                <td>{skills[skillName]?.data?.[0]?.score || 'No rating'}</td> {/* Show the first score as an example */}
+                <td>
+                  <div className="skills-chart-container">
+                    <SkillChart key={index} skillData={skills[skillName]} />
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

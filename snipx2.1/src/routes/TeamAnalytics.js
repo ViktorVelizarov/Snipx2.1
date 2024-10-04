@@ -14,7 +14,7 @@ import {
     RadialLinearScale,
     PointElement,
     LineElement,
-    BarElement, // Import it only once here
+    BarElement,
     Title,
     Tooltip,
     Legend
@@ -26,7 +26,7 @@ ChartJS.register(
     RadialLinearScale,
     PointElement,
     LineElement,
-    BarElement, // Register BarElement once here
+    BarElement,
     Title,
     Tooltip,
     Legend
@@ -39,7 +39,6 @@ const TeamAnalytics = () => {
     const [users, setUsers] = useState([]);
     const [skills, setSkills] = useState([]);
     const [userSkillsWithRatings, setUserSkillsWithRatings] = useState([]);
-    const [snippets, setSnippets] = useState([]);
     const [filteredSnippets, setFilteredSnippets] = useState([]);
     const [selectedEntity, setSelectedEntity] = useState(null);
     const [selectedEntityType, setSelectedEntityType] = useState('teams');
@@ -66,6 +65,9 @@ const TeamAnalytics = () => {
         ],
     };
 
+    // Request tracking variable to prevent stale state updates
+    let fetchId = useRef(0);
+
     useEffect(() => {
         if (user) {
             fetchCompanyId();
@@ -82,10 +84,11 @@ const TeamAnalytics = () => {
 
     useEffect(() => {
         if (selectedEntity) {
+            setFilteredSnippets([]); // Clear previous data while fetching new data
             fetchSnippets();
             fetchUserSkills(selectedEntity.id);
         }
-    }, [selectedEntity, selectedTimePeriod, customDateRange]); // React to entity and calendar changes
+    }, [selectedEntity, selectedTimePeriod, customDateRange]);
 
     useEffect(() => {
         if (filteredSnippets.length || userSkillsWithRatings.length) {
@@ -118,12 +121,13 @@ const TeamAnalytics = () => {
     const fetchUsers = async () => {
         try {
             const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_users", user);
-            console.log("Fetched users:", response.data); // Log fetched users to check their teamId
             setUsers(response.data);
+            console.log("Fetched users with team associations:", response.data); // LOG USERS AND TEAM ASSOCIATIONS
         } catch (error) {
             console.error("Error fetching users:", error);
         }
     };
+    
 
     const fetchSkills = async () => {
         if (!companyId) return;
@@ -137,15 +141,15 @@ const TeamAnalytics = () => {
         }
     };
 
-    const fetchUserSkills = async (userId) => {
+    const fetchUserSkills = async (entityId) => {
         try {
-            const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${userId}/ratings`, {
+            const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/users/${entityId}/ratings`, {
                 headers: { "Authorization": `Bearer ${user.token}` }
             });
 
             const ratingsData = response.data.reduce((acc, rating) => {
                 if (rating.skill && rating.skill.id) {
-                    acc[rating.skill.id] = parseFloat(rating.score); // Ensure score is parsed as float
+                    acc[rating.skill.id] = parseFloat(rating.score);
                 }
                 return acc;
             }, {});
@@ -162,91 +166,172 @@ const TeamAnalytics = () => {
     };
 
     const fetchSnippets = async () => {
+        const currentFetchId = ++fetchId.current; // Increment fetch ID for each new request
         try {
-            let endpoint = '';
-            let payload = {};
-
             if (selectedEntityType === 'teams') {
-                fetchTeamSnippets(selectedEntity.id); // Fetch team snippets
+                await fetchTeamSnippets(selectedEntity.id, currentFetchId);
             } else if (selectedEntityType === 'users') {
-                endpoint = `https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`;
-                payload = { id: selectedEntity.id };
-                const response = await axios.post(endpoint, payload, {
-                    headers: { "Authorization": `Bearer ${user.token}` }
-                });
-                let filteredSnippets = filterSnippetsByTime(response.data);
-                setFilteredSnippets(filteredSnippets);
-                setIsDataReady(true);
+                await fetchUserSnippets(selectedEntity.id, currentFetchId);
             }
         } catch (error) {
             console.error("Error fetching snippets:", error);
         }
     };
 
-    const fetchTeamSnippets = async (teamId) => {
+
+    const fetchUserSnippets = async (userId, currentFetchId) => {
         try {
-            const teamMembers = users.filter(user => user.teamId === teamId);
-            console.log("Team members:", teamMembers); // Log team members to see if they are correctly fetched
-            
+            const response = await axios.post(`https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`, {
+                id: userId
+            }, {
+                headers: { "Authorization": `Bearer ${user.token}` }
+            });
+    
+            // Group snippets by date and calculate average for each day
+            const userDayStats = {};
+    
+            response.data.forEach(snippet => {
+                // Check if snippet.date is valid
+                if (!snippet.date) {
+                    console.error("Snippet has no date:", snippet);
+                    return; // Skip snippets without a date
+                }
+    
+                const snippetDate = new Date(snippet.date);
+                if (isNaN(snippetDate.getTime())) {
+                    console.error("Invalid date found:", snippet.date);
+                    return; // Skip invalid dates
+                }
+    
+                // Format the date as "YYYY-MM-DD"
+                const formattedDate = snippetDate.toISOString().split('T')[0];
+                const score = parseFloat(snippet.score);
+    
+                // Initialize date entry if it doesn't exist
+                if (!userDayStats[formattedDate]) {
+                    userDayStats[formattedDate] = { totalScore: 0, snippetCount: 0 };
+                }
+    
+                // Add the score and increment the snippet count for the specific day
+                userDayStats[formattedDate].totalScore += score;
+                userDayStats[formattedDate].snippetCount += 1;
+            });
+    
+            // Calculate average sentiment for each day (one data point per day)
+            const userSnippets = Object.keys(userDayStats).map(date => ({
+                date,
+                score: userDayStats[date].totalScore / userDayStats[date].snippetCount // Calculate average
+            }));
+    
+            // Sort snippets by date
+            const sortedSnippets = userSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+            // Apply the time range filter (Last week, Last month, etc.) AFTER computing the averages
+            const filteredSnippets = filterSnippetsByTime(sortedSnippets);
+    
+            // Ensure only the latest request updates the state
+            if (currentFetchId === fetchId.current) {
+                setFilteredSnippets(filteredSnippets);
+                setIsDataReady(true);
+            }
+        } catch (error) {
+            console.error("Error fetching user snippets:", error);
+        }
+    };
+    
+       
+
+    const fetchTeamSnippets = async (teamId, currentFetchId) => {
+        try {
+            const teamMembers = selectedEntity.teamMembers; // Ensure we are using teamMembers array with user_id
             let allSnippets = [];
-        
-            // Step 1: Fetch snippets for each team member
+    
+            // Fetch snippets for each team member using their user_id
             for (const member of teamMembers) {
                 const response = await axios.post(`https://extension-360407.lm.r.appspot.com/api/snipx_snippets/user`, {
-                    id: member.id
+                    id: member.user_id // Ensure we use 'user_id' here
                 }, {
                     headers: { "Authorization": `Bearer ${user.token}` }
                 });
-                allSnippets = [...allSnippets, ...response.data];
-            }
-            
-            console.log("All snippets fetched for team members:", allSnippets); // Log fetched snippets
-        
-            // Step 2: Organize snippets by date and calculate average sentiment for each day
-            const teamDayStats = {};
-            allSnippets.forEach(snippet => {
-                const snippetDate = new Date(snippet.date).toLocaleDateString(); // Group by date
-                const score = parseFloat(snippet.score); // Convert the score to a number
-        
-                // Initialize date entry if it doesn't exist
-                if (!teamDayStats[snippetDate]) {
-                    teamDayStats[snippetDate] = { totalScore: 0, snippetCount: 0 };
+    
+                // If any snippets are returned, append them to allSnippets
+                if (response.data && response.data.length > 0) {
+                    allSnippets = [...allSnippets, ...response.data];
                 }
-        
+            }
+    
+            // Debug: Log the fetched snippets
+            console.log("All snippets fetched for team members:", allSnippets);
+    
+            // If no snippets are found, log and return
+            if (allSnippets.length === 0) {
+                console.warn("No snippets found for the selected team members.");
+                return;
+            }
+    
+            // Group snippets by date and calculate the average for each day
+            const teamDayStats = {};
+    
+            allSnippets.forEach(snippet => {
+                if (!snippet.date) {
+                    console.error("Snippet has no date:", snippet);
+                    return;
+                }
+    
+                const snippetDate = new Date(snippet.date);
+                if (isNaN(snippetDate.getTime())) {
+                    console.error("Invalid date found:", snippet.date);
+                    return;
+                }
+    
+                const formattedDate = snippetDate.toISOString().split('T')[0];
+                const score = parseFloat(snippet.score);
+    
+                // Initialize date entry if it doesn't exist
+                if (!teamDayStats[formattedDate]) {
+                    teamDayStats[formattedDate] = { totalScore: 0, snippetCount: 0 };
+                }
+    
                 // Add the score and increment the snippet count for the specific day
-                teamDayStats[snippetDate].totalScore += score;
-                teamDayStats[snippetDate].snippetCount += 1;
+                teamDayStats[formattedDate].totalScore += score;
+                teamDayStats[formattedDate].snippetCount += 1;
             });
-            
-            console.log("Team day stats:", teamDayStats); // Log the teamDayStats to check aggregation
-        
-            // Step 3: Calculate average sentiment for each day (one data point per day)
+    
+            // Debug: Log team day stats
+            console.log("Team day stats:", teamDayStats);
+    
             const teamSnippets = Object.keys(teamDayStats).map(date => ({
                 date,
-                score: teamDayStats[date].totalScore / teamDayStats[date].snippetCount // Calculate average
+                score: teamDayStats[date].totalScore / teamDayStats[date].snippetCount
             }));
-        
-            // Step 4: Sort snippets by date
+    
             const sortedSnippets = teamSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));
-        
-            // Step 5: Apply the time filter to the computed daily averages
+    
             const filteredSnippets = filterSnippetsByTime(sortedSnippets);
-            
-            console.log("Filtered snippets:", filteredSnippets); // Log the filtered snippets to check the result
-        
-            // Step 6: Update state
-            setFilteredSnippets(filteredSnippets);
-            setIsDataReady(true);
+    
+            // Debug: Log the filtered snippets after time range filter
+            console.log("Filtered snippets after applying time range:", filteredSnippets);
+    
+            if (currentFetchId === fetchId.current) {
+                setFilteredSnippets(filteredSnippets);
+                setIsDataReady(true);
+    
+                // Debug: Confirm state update
+                console.log("Filtered snippets set in state:", filteredSnippets);
+            }
         } catch (error) {
             console.error("Error fetching team snippets:", error);
         }
     };
+    
+        
+    
+    
 
     const filterSnippetsByTime = (snippets) => {
         const now = new Date();
         let filteredData = snippets;
 
-        // Apply time-based filtering
         if (selectedTimePeriod === 'Last week') {
             const oneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
             filteredData = snippets.filter(snippet => new Date(snippet.date) >= oneWeekAgo);
@@ -263,31 +348,30 @@ const TeamAnalytics = () => {
             });
         }
 
-        // Sort the filtered data in chronological order
         filteredData = filteredData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         return filteredData;
     };
 
     const updateCharts = (data, skillsData) => {
-        // Step 1: Create labels based on the dates in the data
         const trendLabels = data.map(snippet => new Date(snippet.date).toLocaleDateString());
-        const sentimentScores = data.map(snippet => parseFloat(snippet.score)); // Ensure scores are numbers
     
-        // Step 2: Create dayStats to track total scores and counts for each day of the week
+        let sentimentScores = data.map(snippet => parseFloat(snippet.score));
+    
+        if (selectedEntityType === 'teams') {
+            sentimentScores = data.map(snippet => snippet.score);
+        }
+    
         const dayStats = new Array(7).fill(0).map(() => ({ total: 0, count: 0 }));
     
-        // Step 3: Add up the scores for each day of the week
         data.forEach(snippet => {
-            const dayOfWeek = new Date(snippet.date).getDay(); // Get day of the week (0 = Sunday, 6 = Saturday)
-            dayStats[dayOfWeek].total += parseFloat(snippet.score); // Add up the scores
-            dayStats[dayOfWeek].count += 1; // Increment count for that day
+            const dayOfWeek = new Date(snippet.date).getDay();
+            dayStats[dayOfWeek].total += parseFloat(snippet.score);
+            dayStats[dayOfWeek].count += 1;
         });
     
-        // Step 4: Compute the average sentiment for each day of the week
         const dayStatsAverages = dayStats.map(day => day.count === 0 ? 0 : day.total / day.count);
     
-        // Step 5: Update the charts
         const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--graph-line-color').trim();
         const textColor = getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim();
     
@@ -296,7 +380,7 @@ const TeamAnalytics = () => {
                 labels: trendLabels,
                 datasets: [{
                     label: 'Sentiment Scores Over Time',
-                    data: sentimentScores, // Use averaged sentiment scores per day
+                    data: sentimentScores,
                     borderColor: lineColor,
                     backgroundColor: 'rgba(75,192,192,0.2)',
                 }]
@@ -308,7 +392,6 @@ const TeamAnalytics = () => {
                         max: 10,
                         ticks: {
                             color: textColor,
-                            stepSize: 0.1 // Ensure floating point precision
                         }
                     }
                 }
@@ -321,7 +404,7 @@ const TeamAnalytics = () => {
                 labels: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
                 datasets: [{
                     label: 'Average Sentiment by Day',
-                    data: dayStatsAverages, // Use the computed dayStatsAverages
+                    data: dayStatsAverages,
                     backgroundColor: 'rgba(153, 102, 255, 0.6)',
                     borderColor: 'rgba(153, 102, 255, 1)',
                 }]
@@ -335,11 +418,12 @@ const TeamAnalytics = () => {
         }
     
         if (radarChartRef.current) {
+            // Only show days where snippet score was under 5
             radarChartRef.current.data = {
-                labels: data.map(snippet => new Date(snippet.date).toLocaleDateString()),
+                labels: data.filter(snippet => parseFloat(snippet.score) < 5).map(snippet => new Date(snippet.date).toLocaleDateString()),
                 datasets: [{
-                    label: 'Critical Panthers (Low Sentiment)',
-                    data: data.filter(snippet => parseFloat(snippet.score) < 4).map(snippet => parseFloat(snippet.score)),
+                    label: 'Critical Panthers (Score Under 5)',
+                    data: data.filter(snippet => parseFloat(snippet.score) < 5).map(snippet => parseFloat(snippet.score)),
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderColor: 'rgba(255, 99, 132, 1)',
                     pointBackgroundColor: 'rgba(255, 99, 132, 1)',
@@ -366,7 +450,13 @@ const TeamAnalytics = () => {
                 }]
             };
             pdpRadarChartRef.current.options = {
-                scales: { r: { min: 0, max: 5, ticks: { color: textColor } } }
+                scales: { 
+                    r: { 
+                        min: 0, 
+                        max: 10,  // Set the max to 10 for PDP Progress
+                        ticks: { color: textColor } 
+                    } 
+                }
             };
             pdpRadarChartRef.current.update();
         }
@@ -376,12 +466,18 @@ const TeamAnalytics = () => {
     const handleEntityTypeChange = (type) => {
         setSelectedEntityType(type);
         setSelectedEntity(null);
-        setFilteredSnippets([]);  // Clear snippets when switching entity types
+        setFilteredSnippets([]);
     };
 
     const handleTeamSelection = (e) => {
         const entity = teams.find(team => team.id === parseInt(e.target.value));
-        console.log("Selected team:", entity); // Log the selected team to verify it's correct
+        console.log("Selected team:", entity); // LOGGING SELECTED TEAM
+        setSelectedEntity(entity);
+    };
+    
+
+    const handleUserSelection = (e) => {
+        const entity = users.find(user => user.id === parseInt(e.target.value));
         setSelectedEntity(entity);
     };
 
@@ -389,14 +485,16 @@ const TeamAnalytics = () => {
         setSelectedTimePeriod(value);
         setShowCalendar(value === 'Calendar');
         if (selectedEntity && value !== 'Calendar') {
-            fetchSnippets(); // Fetch new data when time period changes
+            setFilteredSnippets([]);
+            fetchSnippets();
         }
     };
 
     const onCalendarChange = (dateRange) => {
         setCustomDateRange(dateRange);
         if (selectedEntity) {
-            fetchSnippets(); // Fetch new data based on calendar range
+            setFilteredSnippets([]);
+            fetchSnippets();
         }
     };
 
@@ -410,15 +508,27 @@ const TeamAnalytics = () => {
                     <option value="users">Users</option>
                 </select>
 
-                <select
-                    value={selectedEntity ? selectedEntity.id : ''}
-                    onChange={(e) => handleTeamSelection(e)}
-                >
-                    <option value="" disabled>Select Team</option>
-                    {teams.map(team => (
-                        <option key={team.id} value={team.id}>{team.team_name}</option>
-                    ))}
-                </select>
+                {selectedEntityType === 'teams' ? (
+                    <select
+                        value={selectedEntity ? selectedEntity.id : ''}
+                        onChange={handleTeamSelection}
+                    >
+                        <option value="" disabled>Select Team</option>
+                        {teams.map(team => (
+                            <option key={team.id} value={team.id}>{team.team_name}</option>
+                        ))}
+                    </select>
+                ) : (
+                    <select
+                        value={selectedEntity ? selectedEntity.id : ''}
+                        onChange={handleUserSelection}
+                    >
+                        <option value="" disabled>Select User</option>
+                        {users.map(user => (
+                            <option key={user.id} value={user.id}>{user.email}</option>
+                        ))}
+                    </select>
+                )}
 
                 <select value={selectedTimePeriod} onChange={(e) => handleTimePeriodChange(e.target.value)}>
                     <option value="Last week">Last week</option>

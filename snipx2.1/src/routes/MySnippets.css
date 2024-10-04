@@ -24,31 +24,6 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.snippets-table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.snippets-table th, 
-.snippets-table td {
-    padding: 12px;
-    border: 1px solid #ddd;
-    text-align: left;
-}
-
-.snippets-table th {
-    background-color: #F7F7F7;
-    color: #555;
-    font-weight: 600;
-}
-
-.snippets-table td {
-    background-color: #FFF;
-    color: #666;
-}
-
 .pagination {
     display: flex;
     justify-content: center;

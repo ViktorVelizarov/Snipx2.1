@@ -71,8 +71,8 @@ function UserSkillHoursAndNotifications() {
             <h1 className="page-title">User Skill Hours and Notifications</h1>
 
             {/* User Skill Hours Table */}
+            <h2 className="table-title">User Skill Hours</h2>
             <div className="table-container">
-                <h2 className="table-title">User Skill Hours</h2>
                 <table>
                     <thead>
                         <tr>
@@ -96,8 +96,8 @@ function UserSkillHoursAndNotifications() {
             </div>
 
             {/* Notifications Table */}
+            <h2 className="table-title">Notifications</h2>
             <div className="table-container">
-                <h2 className="table-title">Notifications</h2>
                 <table>
                     <thead>
                         <tr>
