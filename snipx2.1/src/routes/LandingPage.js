@@ -246,7 +246,7 @@ const refetchUserProfile = async () => {
       ...prevUser,
       profilePictureUrl, // Set the new profile picture URL
     }));
-    console.log("new user:",)
+    console.log("new user:", user)
   } catch (error) {
     console.error("Error fetching profile picture:", error);
   }
