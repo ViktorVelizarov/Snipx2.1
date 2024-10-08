@@ -6,15 +6,18 @@ function Users() {
     const [users, setUsers] = useState([]);
     const [managerEmails, setManagerEmails] = useState({});
     const [newEmail, setNewEmail] = useState("");
-    const [newRole, setNewRole] = useState("user");  // Default role is "user"
+    const [newRole, setNewRole] = useState("user");
     const [newManagerId, setNewManagerId] = useState("");
     const [editingUserId, setEditingUserId] = useState(null);
     const [editingEmail, setEditingEmail] = useState("");
-    const [editingRole, setEditingRole] = useState("user");  // Default role is "user"
+    const [editingRole, setEditingRole] = useState("user");
     const [editingManagerId, setEditingManagerId] = useState("");
-    const { user } = useAuth();
+    const { user, isLoading, error } = useAuth(); // Update to handle loading and error states
 
+    // Fetch users only after the `user` is available
     useEffect(() => {
+        if (!user) return; // Only proceed if the `user` is loaded
+        
         const fetchUsers = async () => {
             try {
                 const response = await fetch("https://extension-360407.lm.r.appspot.com/api/company_users", {
@@ -22,11 +25,11 @@ function Users() {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(user),
+                    body: JSON.stringify({ id: user.id }),  // Ensure user ID is sent properly
                 });
                 const data = await response.json();
                 setUsers(data);
-                fetchManagerEmails(data); // Fetch emails for the managedBy field
+                fetchManagerEmails(data);
             } catch (error) {
                 console.error("Error fetching users:", error);
             }
@@ -47,7 +50,7 @@ function Users() {
                         },
                     });
                     const data = await response.json();
-                    emails[user.managedBy] = data.email;
+                    emails[user.managedBy] = data.email; // Ensure data has email
                 } catch (error) {
                     console.error("Error fetching manager email:", error);
                 }
@@ -76,8 +79,8 @@ function Users() {
 
     const handleEditClick = (user) => {
         setEditingUserId(user.id);
-        setEditingEmail(user.email);
-        setEditingRole(user.role);
+        setEditingEmail(user.email || ""); // Default to empty string if email is undefined
+        setEditingRole(user.role || "user"); // Default to "user" if role is undefined
         setEditingManagerId(user.managedBy || "");
     };
 
@@ -102,7 +105,7 @@ function Users() {
                     )
                 );
                 setEditingUserId(null);
-                fetchManagerEmails(users); // Update the emails after save
+                fetchManagerEmails(users);
             } else {
                 console.error("Failed to save user");
             }
@@ -116,6 +119,11 @@ function Users() {
     };
 
     const handleCreateUser = async () => {
+        if (!user || !user.id) {
+            console.error("User not available for creating a new user.");
+            return;
+        }
+
         try {
             const response = await fetch("https://extension-360407.lm.r.appspot.com/api/snipx_users", {
                 method: "POST",
@@ -133,9 +141,9 @@ function Users() {
                 const newUser = await response.json();
                 setUsers([newUser, ...users]);
                 setNewEmail("");
-                setNewRole("user");  // Reset role to default "user"
+                setNewRole("user");
                 setNewManagerId("");
-                fetchManagerEmails([newUser, ...users]); // Fetch emails after creating a user
+                fetchManagerEmails([newUser, ...users]);
             } else {
                 console.error("Failed to create user");
             }
@@ -146,6 +154,15 @@ function Users() {
 
     // Filter out users with the role "deleted"
     const filteredUsers = users.filter(user => user.role !== "deleted");
+
+    // Guarded component rendering
+    if (isLoading) {
+        return <div>Loading user information...</div>; // Prevents rendering until `user` is loaded
+    }
+
+    if (error) {
+        return <div>Error loading user information: {error.message}</div>; // Handle any errors from auth
+    }
 
     return (
         <div className="users-container">
@@ -180,7 +197,7 @@ function Users() {
                             .filter((user) => user.role === "admin")
                             .map((user) => (
                                 <option key={user.id} value={user.id}>
-                                    {user.email}
+                                    {user.email || "N/A"}  {/* Ensure there's a fallback */}
                                 </option>
                             ))}
                     </select>
@@ -214,7 +231,7 @@ function Users() {
                                             className="input-field"
                                         />
                                     ) : (
-                                        user.email
+                                        user.email || "N/A" // Fallback to "N/A" if email is undefined
                                     )}
                                 </td>
                                 <td>
@@ -228,7 +245,7 @@ function Users() {
                                             <option value="admin">Admin</option>
                                         </select>
                                     ) : (
-                                        user.role
+                                        user.role || "N/A" // Fallback to "N/A" if role is undefined
                                     )}
                                 </td>
                                 <td>
@@ -241,46 +258,26 @@ function Users() {
                                             <option value="">Select Manager</option>
                                             {filteredUsers
                                                 .filter((user) => user.role === "admin")
-                                                .map((manager) => (
-                                                    <option key={manager.id} value={manager.id}>
-                                                        {manager.email}
+                                                .map((admin) => (
+                                                    <option key={admin.id} value={admin.id}>
+                                                        {admin.email || "N/A"} {/* Ensure there's a fallback */}
                                                     </option>
                                                 ))}
                                         </select>
                                     ) : (
-                                        user.managedBy ? managerEmails[user.managedBy] || user.managedBy : "None"
+                                        managerEmails[user.managedBy] || "N/A" // Fallback if email is not found
                                     )}
                                 </td>
                                 <td>
                                     {editingUserId === user.id ? (
                                         <>
-                                            <button
-                                                onClick={() => handleSave(user.id)}
-                                                className="save-button"
-                                            >
-                                                Save
-                                            </button>
-                                            <button
-                                                onClick={handleCancel}
-                                                className="cancel-button"
-                                            >
-                                                Cancel
-                                            </button>
+                                            <button onClick={() => handleSave(user.id)} className="save-button">Save</button>
+                                            <button onClick={handleCancel} className="cancel-button">Cancel</button>
                                         </>
                                     ) : (
                                         <>
-                                            <button
-                                                onClick={() => handleEditClick(user)}
-                                                className="edit-button"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(user.id)}
-                                                className="delete-button"
-                                            >
-                                                Delete
-                                            </button>
+                                            <button onClick={() => handleEditClick(user)} className="edit-button">Edit</button>
+                                            <button onClick={() => handleDelete(user.id)} className="delete-button">Delete</button>
                                         </>
                                     )}
                                 </td>

@@ -133,9 +133,13 @@ function Snippets() {
   };
 
   const getUserEmail = (userId) => {
-    const user = users.find((user) => user.id === userId);
-    return user ? user.email : "None";
+    if (users && users.length > 0) {
+      const user = users.find((user) => user.id === userId);
+      return user ? user.email : "None";
+    }
+    return "None";
   };
+  
 
   const resizeAllTextAreas = () => {
     [textRef, greenRef, orangeRef, redRef, explanationsRef, scoreRef, sentimentRef, actionTextRef].forEach(refGroup => {
@@ -314,11 +318,12 @@ function Snippets() {
                       className="edit-box"
                     >
                       <option value="">Assign to User</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.email}
-                        </option>
-                      ))}
+                      {users && users.length > 0 && users.map((user) => ( 
+                      <option key={user.id} value={user.id}>
+                        {user.email}
+                      </option>
+                    ))}
+
                     </select>
                   ) : (
                     getUserEmail(snippet.user_id)

@@ -9,7 +9,7 @@ import axios from 'axios';
 import 'chartjs-plugin-trendline';
 
 const Home = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { isDarkMode } = useOutletContext();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [averageScore, setAverageScore] = useState(7.4);
@@ -195,17 +195,63 @@ const Home = () => {
     setIsPopupOpen(true);
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    try {
+      // Prepare form data to send the image file and user ID
+      const formData = new FormData();
+      formData.append('profilePicture', file); // Append the image file
+      formData.append('userId', user.id); // Append the user ID
+
+      // Call the backend API to upload the profile picture
+      await axios.post('https://extension-360407.lm.r.appspot.com/api/uploadProfilePicture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Reset the file input value to prevent it from reopening
+      event.target.value = null;
+
+      // Close the popup after the image is uploaded
+      setIsPopupOpen(false);
+
+      console.log("Profile picture uploaded successfully!");
+
+      // Instead of refreshing the entire page, refetch user data or update the UI
+      // For example, you can call a function to refetch the user's profile or picture data
+      await refetchUserProfile(); // Make sure to define this function
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
     }
-  };
+  }
+};
+
+// Function to refetch the user's profile picture
+const refetchUserProfile = async () => {
+  try {
+    const response = await axios.get(`https://extension-360407.lm.r.appspot.com/api/profilePicture/${user.id}`);
+    const { profilePictureUrl } = response.data; // Adjust based on your response structure
+    
+    // Update the user's profile picture URL in state
+    setUser(prevUser => ({
+      ...prevUser,
+      profilePictureUrl, // Set the new profile picture URL
+    }));
+    console.log("new user:", user)
+  } catch (error) {
+    console.error("Error fetching profile picture:", error);
+  }
+};
+  
 
   const updateChartData = (filteredSnippets) => {
     const sortedSnippets = filteredSnippets.sort((a, b) => new Date(a.date) - new Date(b.date));

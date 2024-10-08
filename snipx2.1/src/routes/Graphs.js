@@ -186,7 +186,7 @@ const Graphs = () => {
                             <option value="length">Snippet Length</option>
                         </select>
                     </div>
-                    {user.role === 'admin' && (
+                    {user && user.role === 'admin' && (
                         <>
                             <div className="dropdown-group">
                                 <label>Select Data Type:</label>

@@ -28,7 +28,7 @@ function WeeklyReports() {
 
     useEffect(() => {
         // Redirect to login if user role is 'deleted'
-        if (user.role === "deleted") {
+        if (user && user.role === "deleted") {
             navigate("/login");
         }
     }, [user, navigate]);
