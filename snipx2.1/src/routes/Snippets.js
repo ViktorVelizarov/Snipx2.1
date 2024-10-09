@@ -5,6 +5,8 @@ import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import './Snippets.css';
 import { useAuth } from "../AuthProvider";
 import axios from 'axios';
+import ReactQuill from "react-quill";
+import 'react-quill/dist/quill.snow.css'; // Import Quill's CSS for rich text
 
 function Snippets() {
   const { user } = useAuth();
@@ -27,15 +29,9 @@ function Snippets() {
     action_text: "", // Added action_text field
   });
 
-  console.log("snippets:", snippets)
-  console.log("users", users)
-
-  // Separate refs for each textarea
-  const textRef = useRef([]);
   const greenRef = useRef([]);
   const orangeRef = useRef([]);
   const redRef = useRef([]);
-  const explanationsRef = useRef([]);
   const scoreRef = useRef([]);
   const sentimentRef = useRef([]);
   const actionTextRef = useRef([]); // Add ref for action_text
@@ -53,8 +49,8 @@ function Snippets() {
 
     const fetchUsers = async () => {
       try {
-          const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_users", user);
-          setUsers(response.data);
+        const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_users", user);
+        setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -135,10 +131,9 @@ function Snippets() {
   const getUser = (userId) => {
     return users.find((user) => user.id === userId);
   };
-  
 
   const resizeAllTextAreas = () => {
-    [textRef, greenRef, orangeRef, redRef, explanationsRef, scoreRef, sentimentRef, actionTextRef].forEach(refGroup => {
+    [greenRef, orangeRef, redRef, scoreRef, sentimentRef, actionTextRef].forEach(refGroup => {
       refGroup.current.forEach(textarea => {
         if (textarea) {
           textarea.style.height = "auto"; // Reset height
@@ -231,16 +226,15 @@ function Snippets() {
                       snippet.date || ""
                     )}</td>
                   <td className="py-2 px-4">{editingSnippetId === snippet.id ? (
-                      <textarea
-                        ref={el => (textRef.current[index] = el)}
+                      <ReactQuill
+                        theme="snow"
                         value={editingSnippet.text}
-                        onChange={(e) => {
-                          setEditingSnippet({ ...editingSnippet, text: e.target.value });
+                        onChange={(value) => {
+                          setEditingSnippet({ ...editingSnippet, text: value });
                         }}
-                        className="edit-box"
                       />
                     ) : (
-                      snippet.text || ""
+                      <div dangerouslySetInnerHTML={{ __html: snippet.text || "" }} />
                     )}
                   </td>
                   <td className="py-2 px-4">
@@ -287,16 +281,15 @@ function Snippets() {
                   </td>
                   <td className="py-2 px-4">
                     {editingSnippetId === snippet.id ? (
-                      <textarea
-                        ref={el => (explanationsRef.current[index] = el)}
+                      <ReactQuill
+                        theme="snow"
                         value={editingSnippet.explanations}
-                        onChange={(e) => {
-                          setEditingSnippet({ ...editingSnippet, explanations: e.target.value });
+                        onChange={(value) => {
+                          setEditingSnippet({ ...editingSnippet, explanations: value });
                         }}
-                        className="edit-box"
                       />
                     ) : (
-                      snippet.explanations || ""
+                      <div dangerouslySetInnerHTML={{ __html: snippet.explanations || "" }} />
                     )}
                   </td>
                   <td className="py-2 px-4">
@@ -383,12 +376,12 @@ function Snippets() {
       <div className="pagination">
         {/* First Page Button */}
         <button onClick={() => paginate(1)} disabled={currentPage === 1} className="pagination-button">
-          <FaAngleDoubleLeft  />
+          <FaAngleDoubleLeft />
         </button>
 
         {/* Previous Page Button */}
         <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="pagination-button">
-          <FaAngleLeft  />
+          <FaAngleLeft />
         </button>
 
         {/* Previous Two Pages */}

@@ -7,7 +7,6 @@
     --btn-bg-color2: #E4277D;
 }
 
-
 body {
     font-family: 'Arial', sans-serif;
     background-color: var(--bg-color);
@@ -18,7 +17,7 @@ body {
 }
 
 h2 {
-    color: black; /* White text for better contrast against the gradient */
+    color: black;
     margin-bottom: 20px;
 }
 
@@ -26,7 +25,7 @@ button {
     background: linear-gradient(45deg, var(--btn-bg-color), var(--btn-bg-color2));
     color: white;
     font-weight: bold;
-    border: none;
+    border: 2px solid var(--btn-bg-color);
     padding: 10px 20px;
     font-size: 16px;
     border-radius: 18px;
@@ -35,19 +34,19 @@ button {
 }
 
 button:hover {
-    background:white; /*Reverse colors on hover*/
+    background:white;
     color: var(--btn-bg-color2);
-    transform: scale(1.05); /* Slight scale effect on hover */
+    border: 2px solid var(--btn-bg-color2);
 }
 
 textarea {
     width: 100%;
     padding: 10px;
     border-radius: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.3); /* Transparent border to match theme */
+    border: 1px solid rgba(255, 255, 255, 0.3);
     font-size: 14px;
     margin-bottom: 20px;
-    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent background */
+    background-color: rgba(255, 255, 255, 0.8);
     color: #333;
 }
 
@@ -82,7 +81,7 @@ textarea:focus {
     margin-bottom: 30px;
 }
 
-.sidebar .logo img{
+.sidebar .logo img {
     width: 120px;
     height: auto;
 }
@@ -111,6 +110,12 @@ textarea:focus {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* Highlight active links */
+.sidebar ul li.active a {
+    background-color: rgba(255, 255, 255, 0.1); /* You can adjust this color as needed */
+    font-weight: bold;
+}
+
 .sidebar ul li a svg {
     margin-right: 10px;
 }
@@ -120,15 +125,11 @@ textarea:focus {
     margin-bottom: 20px;
 }
 
-.sidebar ul li.logout a {
-    background: rgba(255, 255, 255, 0.1);
-}
-
 /* Toggle Button Styles */
 .toggle-btn {
     position: fixed;
     top: 20px;
-    left: 250px; /* Position next to the open sidebar */
+    left: 250px;
     z-index: 1001;
     background-color: var(--navbar-color2);
     color: white;
@@ -138,7 +139,7 @@ textarea:focus {
 }
 
 .sidebar.closed + .toggle-btn {
-    left: 10px; /* Adjust position when sidebar is closed */
+    left: 10px;
 }
 
 /* Content Styles */
@@ -152,6 +153,7 @@ textarea:focus {
     margin-left: 0;
 }
 
+/* Responsive Sidebar */
 @media (max-width: 768px) {
     .sidebar {
         width: 200px;
@@ -173,4 +175,3 @@ textarea:focus {
         margin-left: 0;
     }
 }
-

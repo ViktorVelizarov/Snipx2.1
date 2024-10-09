@@ -148,3 +148,7 @@
 .multi-select-item:hover{
   transform: scale(1.05); /* Slight scale effect on hover */
 }
+
+.skill-level-captions{
+  color:var(--black-text);
+}

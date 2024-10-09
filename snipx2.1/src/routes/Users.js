@@ -201,7 +201,7 @@ function Users() {
                                 </option>
                             ))}
                     </select>
-                    <button onClick={handleCreateUser} className="create-button">Create</button>
+                    <button onClick={handleCreateUser} className="users-create-button">Create</button>
                 </div>
                 <h2 className="form-title">List of Users</h2>
             </div>
@@ -214,8 +214,8 @@ function Users() {
                             <th>ID</th>
                             <th>Email</th>
                             <th>Role</th>
-                            <th>Managed by</th>
-                            <th>Actions</th>
+                            <th className="centered-column">Managed by</th>
+                            <th className="centered-column">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -248,7 +248,7 @@ function Users() {
                                         user.role || "N/A" // Fallback to "N/A" if role is undefined
                                     )}
                                 </td>
-                                <td>
+                                <td className="centered-column">
                                     {editingUserId === user.id ? (
                                         <select
                                             value={editingManagerId}
@@ -268,7 +268,7 @@ function Users() {
                                         managerEmails[user.managedBy] || "N/A" // Fallback if email is not found
                                     )}
                                 </td>
-                                <td>
+                                <td className="centered-column">
                                     {editingUserId === user.id ? (
                                         <>
                                             <button onClick={() => handleSave(user.id)} className="save-button">Save</button>

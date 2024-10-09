@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { Line } from 'react-chartjs-2';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -371,29 +373,33 @@ const refetchUserProfile = async () => {
   return (
     <div className="landing-page">
       <div className="profile-section">
-        <div
-          className="profile-picture"
-          style={{
-            backgroundImage: user?.profilePictureUrl ? `url(data:image/png;base64,${user.profilePictureUrl})` : 'none',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            cursor: 'pointer',
-          }}
-          onClick={handleProfilePictureClick}
-        >
-          {!user?.profilePictureUrl && 'Profile Picture'}
+        <div className="profile-content">
+          <div
+            className="profile-picture"
+            style={{
+              backgroundImage: user?.profilePictureUrl ? `url(data:image/png;base64,${user.profilePictureUrl})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              cursor: 'pointer',
+            }}
+            onClick={handleProfilePictureClick}
+          >
+            {!user?.profilePictureUrl && 'Profile Picture'}
+          </div>
+          <div className="profile-info">
+            {user ? (
+              <>
+                <h2>Name: {user.email.substring(0, 3)}</h2>
+                <p>Email: {user.email}</p>
+                <p>Position: {user.role}</p>
+              </>
+            ) : (
+              <p>Loading user information...</p>
+            )}
+          </div>
         </div>
-        <div className="profile-info">
-          {user ? (
-            <>
-              <h2>Name: {user.email.substring(0, 3)}</h2>
-              <p>Email: {user.email}</p>
-              <p>Position: {user.role}</p>
-            </>
-          ) : (
-            <p>Loading user information...</p>
-          )}
-        </div>
+        {/* Sentiment Analysis title placed below */}
+        <h2 className="sentiment-analysis">Sentiment Analysis</h2>
       </div>
 
       {isPopupOpen && (
@@ -433,9 +439,9 @@ const refetchUserProfile = async () => {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Green</th>
-                <th>Yellow</th>
-                <th>Red</th>
+                <th><FontAwesomeIcon icon={faFlag} style={{ color: 'green'}} /></th>
+                <th><FontAwesomeIcon icon={faFlag} style={{ color: 'orange'}} /></th>
+                <th><FontAwesomeIcon icon={faFlag} style={{ color: 'red'}} /></th>
                 <th>Actions for next day</th>
               </tr>
             </thead>
@@ -455,7 +461,6 @@ const refetchUserProfile = async () => {
       </div>
 
       <div className="analysis-section">
-        <h2>Sentiment Analysis</h2>
         <Line
           className="sentiment-analysis-graph"
           data={chartData}
@@ -478,7 +483,7 @@ const refetchUserProfile = async () => {
       </div>
       
       <div className="skills-section">
-        <h2>User Skills</h2>
+        <h2 className='user-skills'>User Skills</h2>
         <table className="skills-table">
           <thead>
             <tr>

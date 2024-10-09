@@ -5,6 +5,7 @@
     --btn-bg-color: #E4277D;
     --btn-bg-color2: #FFB300;
     --colored-text: white;
+    --black-text:black;
 }
 
 /* Container removed; content is now directly on the page */
@@ -63,7 +64,7 @@
 /* Snippet input styling */
 .snippet-container {
     width: 100%;
-    margin-bottom: 100px;
+    margin-bottom: 80px;
 }
 
 /* Label styling */
@@ -96,6 +97,15 @@
 .snippet-input .ql-editor {
     border-radius: 0 0 10px 10px;
     background-color: #fff;
+}
+
+.action-label{
+    font-size: 26px;
+    color: var(--colored-text);
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: block;
+    text-align: left;
 }
 
 /* Output container styling */

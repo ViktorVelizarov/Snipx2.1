@@ -236,36 +236,41 @@ const Graphs = () => {
                 </div>
 
                 <div className="chart-section">
-                    <Line
-                        data={chartData}
-                        options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    labels: {
-                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-                                    },
-                                },
+                <Line
+                    data={chartData}
+                    options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                        legend: {
+                            labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
                             },
-                            scales: {
-                                x: {
-                                    ticks: {
-                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-                                    },
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    max: selectedGraph === 'sentiment' ? 10 : undefined,
-                                    ticks: {
-                                        color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
-                                    },
-                                },
+                        },
+                        },
+                        scales: {
+                        x: {
+                            ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
                             },
-                        }}
-                        ref={chartRef}
-                        height={400}
-                        width={800}
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: selectedGraph === 'sentiment' ? 10 : undefined, // Ensure max is 10 for sentiment scores
+                            ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                            },
+                            title: {
+                            display: selectedGraph === 'length', // Display the title only when "Snippet Length" is selected
+                            text: 'Characters per Snippet', // Y-axis label when viewing "Snippet Length"
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--black-text').trim(),
+                            },
+                        },
+                        },
+                    }}
+                    ref={chartRef}
+                    height={400}
+                    width={800}
                     />
                 </div>
             </div>

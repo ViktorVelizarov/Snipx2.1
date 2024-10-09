@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useAuth } from "../AuthProvider";
 import axios from "axios";
+import ReactQuill from "react-quill";
+import 'react-quill/dist/quill.snow.css'; // Import the Quill CSS for rich text
 import { FaAngleDoubleLeft, FaAngleDoubleRight, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
@@ -24,11 +26,9 @@ function MySnippets() {
     action_text: "", // Add action_text to state
   });
 
-  const textRef = useRef([]);
   const greenRef = useRef([]);
   const orangeRef = useRef([]);
   const redRef = useRef([]);
-  const explanationsRef = useRef([]);
   const actionTextRef = useRef([]);
 
   useEffect(() => {
@@ -108,7 +108,7 @@ function MySnippets() {
   };
 
   const resizeAllTextAreas = () => {
-    [textRef, greenRef, orangeRef, redRef, explanationsRef, actionTextRef].forEach(refGroup => {
+    [greenRef, orangeRef, redRef, actionTextRef].forEach(refGroup => {
       refGroup.current.forEach(textarea => {
         if (textarea) {
           textarea.style.height = "auto";
@@ -204,14 +204,13 @@ function MySnippets() {
                 </td>
                 <td>
                   {editingSnippetId === snippet.id ? (
-                    <textarea
-                      ref={el => (textRef.current[index] = el)}
+                    <ReactQuill
+                      theme="snow"
                       value={editingSnippet.text}
-                      onChange={(e) => setEditingSnippet({ ...editingSnippet, text: e.target.value })}
-                      className="edit-box"
+                      onChange={(content) => setEditingSnippet({ ...editingSnippet, text: content })}
                     />
                   ) : (
-                    snippet.text || ""
+                    <div dangerouslySetInnerHTML={{ __html: snippet.text }}></div> // Render rich text
                   )}
                 </td>
                 <td>
@@ -252,14 +251,13 @@ function MySnippets() {
                 </td>
                 <td>
                   {editingSnippetId === snippet.id ? (
-                    <textarea
-                      ref={el => (explanationsRef.current[index] = el)}
+                    <ReactQuill
+                      theme="snow"
                       value={editingSnippet.explanations}
-                      onChange={(e) => setEditingSnippet({ ...editingSnippet, explanations: e.target.value })}
-                      className="edit-box"
+                      onChange={(content) => setEditingSnippet({ ...editingSnippet, explanations: content })}
                     />
                   ) : (
-                    snippet.explanations || ""
+                    <div dangerouslySetInnerHTML={{ __html: snippet.explanations }}></div> // Render rich text for explanations
                   )}
                 </td>
                 <td>
@@ -294,17 +292,14 @@ function MySnippets() {
       </div>
 
       <div className="pagination">
-        {/* First Page Button */}
         <button onClick={() => paginate(1)} disabled={currentPage === 1} className="pagination-button">
           <FaAngleDoubleLeft />
         </button>
 
-        {/* Previous Page Button */}
         <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="pagination-button">
           <FaAngleLeft />
         </button>
 
-        {/* Previous Two Pages */}
         {currentPage > 2 && (
           <button onClick={() => paginate(currentPage - 2)} className="pagination-button">
             {currentPage - 2}
@@ -316,10 +311,8 @@ function MySnippets() {
           </button>
         )}
 
-        {/* Current Page */}
         <button className="pagination-button active">{currentPage}</button>
 
-        {/* Next Two Pages */}
         {currentPage < totalPages && (
           <button onClick={() => paginate(currentPage + 1)} className="pagination-button">
             {currentPage + 1}
@@ -331,12 +324,10 @@ function MySnippets() {
           </button>
         )}
 
-        {/* Next Page Button */}
         <button onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} className="pagination-button">
           <FaAngleRight />
         </button>
 
-        {/* Last Page Button */}
         <button onClick={() => paginate(totalPages)} disabled={currentPage === totalPages} className="pagination-button">
           <FaAngleDoubleRight />
         </button>

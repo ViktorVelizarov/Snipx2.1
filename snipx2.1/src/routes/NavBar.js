@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useAuth } from "../AuthProvider";
-import { Link, Outlet } from 'react-router-dom';
+import { useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
 import { FaHome, FaPlusSquare, FaClipboardList, FaUsers, FaSignOutAlt, FaChartBar, FaRegCircle, FaCircle, FaCalendarPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaSignInAlt } from 'react-icons/fa';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useAuth } from '../AuthProvider';
 import './style.css';
-
 import SnipXWhiteImage from './images/SNIPX-Logo-White.png';
 import SnipXGradientImage from './images/SNIPX-Logo-Gradient.png';
 
@@ -16,10 +14,11 @@ const NavBar = () => {
     const [snipXImage, setSnipXImage] = useState(SnipXWhiteImage);
     const [firebaseUser, loading] = useAuthState(auth);
     const navigate = useNavigate();
+    const location = useLocation(); // Get the current path
 
     useEffect(() => {
         if (user?.email) {
-            return navigate("/home");
+            return navigate('/home');
         } else if (!loading && firebaseUser) {
             checkDatabase(firebaseUser);
         }
@@ -63,9 +62,13 @@ const NavBar = () => {
         setIsDarkMode(!isDarkMode);
     };
 
+
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
+
+    // Function to check if the current path matches the link path
+    const isActiveLink = (path) => location.pathname === path;
 
     return (
         <>
@@ -76,40 +79,39 @@ const NavBar = () => {
                 <ul>
                     {user ? (
                         <>
-                            <li>
+                            <li className={isActiveLink('/home') ? 'active' : ''}>
                                 <Link to="/home"><FaHome /> Home</Link>
                             </li>
-                            <li>
+                            <li className={isActiveLink('/add-snippet') ? 'active' : ''}>
                                 <Link to="/add-snippet"><FaPlusSquare /> Create Snippets</Link>
                             </li>
-                            <li>
+                            <li className={isActiveLink('/user-pdp') ? 'active' : ''}>
                                 <Link to="/user-pdp"><FaPlusSquare /> My PDP</Link>
                             </li>
-                            <li>
+                            <li className={isActiveLink('/weekly-report') ? 'active' : ''}>
                                 <Link to="/weekly-report"><FaCalendarPlus /> Weekly Report</Link>
                             </li>
-                            <li>
+                            <li className={isActiveLink('/my-snippets') ? 'active' : ''}>
                                 <Link to="/my-snippets"><FaClipboardList /> My Snippets</Link>
                             </li>
-                            <li>
+                            <li className={isActiveLink('/graphs') ? 'active' : ''}>
                                 <Link to="/graphs"><FaChartBar /> Graphs</Link>
                             </li>
-
                             {user.role === 'admin' && (
                                 <>
-                                    <li>
+                                    <li className={isActiveLink('/snippets') ? 'active' : ''}>
                                         <Link to="/snippets"><FaChartBar /> All Snippets</Link>
                                     </li>
-                                    <li>
+                                    <li className={isActiveLink('/users') ? 'active' : ''}>
                                         <Link to="/users"><FaUsers /> Users</Link>
                                     </li>
-                                    <li>
+                                    <li className={isActiveLink('/teams') ? 'active' : ''}>
                                         <Link to="/teams"><FaUsers /> Teams</Link>
                                     </li>
-                                    <li>
+                                    <li className={isActiveLink('/tasks') ? 'active' : ''}>
                                         <Link to="/tasks"><FaUsers /> Tasks</Link>
                                     </li>
-                                    <li>
+                                    <li className={isActiveLink('/notifications') ? 'active' : ''}>
                                         <Link to="/notifications"><FaUsers /> Notifications</Link>
                                     </li>
                                 </>
@@ -119,8 +121,8 @@ const NavBar = () => {
                             </li>
                         </>
                     ) : (
-                        <li>
-                            <Link to="/login" onClick={handleSubmit}><FaSignInAlt />Login</Link>
+                        <li className={isActiveLink('/login') ? 'active' : ''}>
+                            <Link to="/login" onClick={handleSubmit}><FaSignInAlt /> Login</Link>
                         </li>
                     )}
                     <li>
@@ -137,7 +139,6 @@ const NavBar = () => {
                 {isSidebarOpen ? <FaAngleDoubleLeft /> : <FaAngleDoubleRight />}
             </div>
             <div className={`content ${isSidebarOpen ? '' : 'shifted'}`}>
-                {/* Provide the context to the Outlet here */}
                 <Outlet context={{ isDarkMode, toggleColors }} />
             </div>
         </>

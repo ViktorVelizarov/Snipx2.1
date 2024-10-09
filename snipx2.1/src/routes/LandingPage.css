@@ -1,230 +1,205 @@
 :root {
-    --btn-bg-color: #E4277D;
-    --colored-text : #8C4EA0 ;
-    --graph-line-color: #8C4EA0;
-    --bg-color:#ebedee;
+  --btn-bg-color: #E4277D;
+  --colored-text : #8C4EA0 ;
+  --graph-line-color: #8C4EA0;
+  --bg-color: #ebedee;
 }
-
 
 .landing-page {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 20px;
-    padding: 40px;
-  }
-  
-  .profile-section {
-    grid-column: 1 / 2;
-    grid-row: 1 / 2;
-    display: flex;
-    align-items: center;
-  }
-  
-  .profile-picture {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background-color: #ccc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 20px;
-    background-size: cover;         /* Make sure the image covers the entire div */
-    background-position: center;    /* Center the image */
-  }
-  
-  
-  .profile-info {
-    color: var(--colored-text);
-    font-size: 24px;
-  }
-
-  .profile-info h2{
-    color: var(--colored-text);
-  }
-  
-  .overview-section {
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
-    background-color: #f1f1f1;
-    padding: 20px;
-    border-radius: 10px;
-  }
-
-  .landing-page-table-wrapper {
-    max-height: 200px; /* Adjust this value based on your layout */
-    overflow-y: auto;
-    overflow-x: hidden; /* Prevent horizontal scrolling */
-  }
-  
-  .overview-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .overview-table th,
-  .overview-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-  }
-  .highlighted-row {
-    background-color: rgba(228, 39, 125, 0.3); /* Special color for the selected day */
-  }
-
-  .analysis-section {
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .analysis-section h2{
-    color: var(--colored-text);
-  }
-  .sentiment-analysis-graph{
-    width: 100%;
-    height: 100%;
-  }
-  
-  .average-score-container {
-    display: flex;
-    align-items: center;
-    gap: 20px; /* Adjust the spacing between the average score and the button */
-  }
-  
-  .average-score {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .circle {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background-color: #f4f4f4;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    color: #333;
-  }
-  
-  
-  .calendar-section {
-    display: flex;
-    justify-content: center;
-    margin-top: 90px;
-  }
-  
-  .calendar-controls {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-  }
-  
-  .calendar-controls button {
-    padding: 10px 20px;
-    border: none;
-    background-color: var(--btn-bg-color);
-    color: white;
-    cursor: pointer;
-  }
-  
-  .calendar-controls button:hover {
-    background-color: white;
-  }
-
-
-  .react-calendar {
-    width: 100%; /* Make the calendar take up the full width of its container */
-    max-width: 500px; /* Set a maximum width for the calendar */
-    height : 100%;
-    max-height:350px;
-    font-size: 1.2rem; /* Increase the font size */
-    border: 1px solid #ddd; /* Remove border if you want */
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
-    border-radius: 10px; /* Add rounded corners */
-  }  
-  
-  /* Calendar Header Styles */
-.react-calendar__navigation button {
-    color: black; /* Change to a visible color */
-    background-color: #ebedee;
-    font-weight: bold;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+  padding: 40px;
 }
 
-.react-calendar__navigation button:disabled {
-    color: #ccc; /* Style for disabled buttons */
-}
-
-.react-calendar__navigation {
-    background-color: #ebedee; /* Ensure the background is not transparent */
-    border-bottom: 1px solid #ddd;
-    border-radius: 10px; /* Add rounded corners */
-}
-
-.react-calendar__tile {
-    background: white; /* Ensure the tiles are visible */
-    color: black; /* Ensure the text is visible */
-}
-
-.react-calendar__tile--active {
-    background: var(--btn-bg-color); /* Highlight active day */
-    color: white;
-}
-.react-calendar__tile--active:enabled:focus {
-    background-color: var(--btn-bg-color); /* Maintain the same color on hover and focus */
-    color: white; 
-}
-.react-calendar__tile--hover {
-    background: #8C4EA0; /* Slight hover effect */
-}
-
-/* Adjust the text color and hover for better contrast */
-.react-calendar__month-view__weekdays {
-    color: black;
-}
-
-
-.upload-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+.profile-section {
   display: flex;
-  justify-content: center;
+  flex-direction: column; /* Stack elements vertically */
+}
+
+.profile-content {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  display: flex; /* Keep profile picture and info side by side */
+  flex-direction: row;
+  align-items: center; /* Align items vertically centered */
+  margin-bottom: 100px;
+  margin-top: 30px;
+}
+
+.profile-picture {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #ccc;
+  display: flex;
   align-items: center;
-  z-index: 1000;
+  justify-content: center;
+  margin-right: 20px;
+  background-size: cover;
+  background-position: center;
 }
 
-.upload-popup-content {
-  background: white;
-  padding: 20px;
+.profile-info {
+  color: var(--colored-text);
+  font-size: 24px;
+}
+
+.profile-info h2 {
+  color: var(--colored-text);
+}
+
+.overview-section {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  background-color: #f1f1f1;
+  padding: 15px;
   border-radius: 10px;
-  text-align: center;
-  width: 400px;
 }
 
-.upload-area {
+.landing-page-table-wrapper {
+  max-height: 300px; 
+  overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+.overview-table {
   width: 100%;
-  height: 200px;
-  border: 2px dashed #ccc;
-  border-radius: 10px;
+  border-collapse: collapse;
+  font-size: 0.9rem; /* Make font smaller for better fit */
+}
+
+.overview-table th,
+.overview-table td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: left;
+}
+
+.highlighted-row {
+  background-color: rgba(228, 39, 125, 0.3); /* Special color for the selected day */
+}
+
+.analysis-section {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sentiment-analysis {
+  color: var(--colored-text);
+  text-align: center;
+}
+
+.sentiment-analysis-graph {
+  width: 100%;
+  height: 100%;
+}
+
+.user-skills {
+  color: var(--colored-text);
+}
+
+.average-score-container {
   display: flex;
   align-items: center;
+  gap: 20px; /* Adjust the spacing between the average score and the button */
+}
+
+.average-score {
+  display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  align-items: center;
+}
+
+.circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  color: #333;
+}
+
+.calendar-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px; /* Reduce margin to make more space */
+}
+
+.calendar-controls {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.calendar-controls button {
+  padding: 10px 20px;
+  border: none;
+  background-color: var(--btn-bg-color);
+  color: white;
   cursor: pointer;
 }
 
-.upload-area p {
-  margin: 0;
-  color: #aaa;
+.calendar-controls button:hover {
+  background-color: white;
+}
+
+.react-calendar {
+  width: 100%; /* Make the calendar take up the full width of its container */
+  max-width: 500px; /* Set a maximum width for the calendar */
+  height : 100%;
+  max-height:350px;
+  font-size: 1.2rem; /* Increase the font size */
+  border: 1px solid #ddd; /* Remove border if you want */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+  border-radius: 10px; /* Add rounded corners */
+}  
+
+
+.react-calendar__navigation button {
+  color: black;
+  background-color: #ebedee;
+  font-weight: bold;
+}
+
+.react-calendar__navigation button:disabled {
+  color: #ccc;
+}
+
+.react-calendar__navigation {
+  background-color: #ebedee;
+  border-bottom: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+.react-calendar__tile {
+  background: white;
+  color: black;
+}
+
+.react-calendar__tile--active {
+  background: var(--btn-bg-color);
+  color: white;
+}
+
+.react-calendar__tile--active:enabled:focus {
+  background-color: var(--btn-bg-color);
+  color: white;
+}
+
+.react-calendar__tile--hover {
+  background: #8C4EA0;
+}
+
+.react-calendar__month-view__weekdays {
+  color: black;
 }
 
 .preview-image {

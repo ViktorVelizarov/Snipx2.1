@@ -2,8 +2,9 @@
 :root {
     --container-color1: #E4277D;
     --container-color2: #FFB300;
-    --btn-bg-color : #E4277D;
-    --colored-text : white;
+    --btn-bg-color: #E4277D;
+    --colored-text: white;
+    --black-text: black;
 }
 
 .teams-container {
@@ -11,52 +12,103 @@
     margin: 40px auto;
     padding: 20px;
     background: transparent;
-    color: var(--colored-text);
 }
 
-.form-inputs {
-    display: flex;
-    flex-direction: row; /* Align elements horizontally */
-    align-items: center;
-    gap: 15px; /* Add space between the form elements */
+.page-title {
+    font-size: 28px;
+    color: #E4277D;
+    text-align: left;
+    margin-bottom: 20px;
 }
 
 .form-title {
     color: var(--colored-text);
 }
 
-.page-title {
-    font-size: 28px;
-    color: #E4277D; /* Update title color */
-    text-align: left;
-    margin-bottom: 20px;
+/* Create a grid for the form with 5 columns and 1 row */
+.team-creation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 0.8fr 1fr; /* 5 columns */
+    grid-gap: 20px;
+    align-items: start;
 }
 
-.new-team-form {
+
+.input-and-its-title {
     display: flex;
-    flex-direction: column; /* Align elements vertically */
-    align-items: flex-start; /* Align elements to the left */
-    margin-bottom: 20px;
+    flex-direction: column;
+}
+
+.input-title{
+    color:var(--black-text);
+    margin-bottom: 5px;
 }
 
 .input-field {
-    height: 45px; /* Ensure consistent height for inputs */
+    height: 45px;
     padding: 10px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     background-color: rgba(255, 255, 255, 0.8);
     color: #333;
     font-size: 16px;
-    box-sizing: border-box; /* Ensure padding doesn't affect height */
+    box-sizing: border-box;
 }
 
-select {
-    margin-bottom: 20px;
+/* Multi-Select Container */
+.multi-select-container {
+    display: flex;
+    flex-direction: column;
 }
 
-.create-button {
-    margin-bottom: 28px;
+.multi-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-width: 250px;
 }
+
+.multi-select-item {
+    padding: 5px 10px;
+    border: 1px solid #007BFF;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: white;
+    transition: background-color 0.3s;
+}
+
+.multi-select-item.selected {
+    background-color: #007BFF;
+    color: white;
+}
+
+.scrollable {
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 5px;
+    width: 250px;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-left: -50px;
+}
+
+.clear-button, .select-all-button {
+    width:50%;
+    margin-top: -10px; /* Move buttons a bit higher */
+}
+
+.teams-create-button{
+    margin-left: -50px; /* Move 'Create' button to the left */
+    margin-top: 5px;
+    width: 40%;
+}
+
 
 .teams-table {
     margin-top: 20px;
@@ -73,7 +125,7 @@ table {
 
 th, td {
     padding: 12px 15px;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid #ddd;
 }
 
@@ -87,18 +139,11 @@ tr:last-child td {
     border-bottom: none;
 }
 
-.edit-button, .delete-button, .save-button, .cancel-button {
-    background: linear-gradient(45deg, var(--btn-bg-color), var(--btn-bg-color2));
+.edit-button, .delete-button {
     margin-right: 10px;
-    color: white;
     padding: 8px 16px;
     font-size: 14px;
     border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.edit-button:hover, .delete-button:hover, .save-button:hover, .cancel-button:hover {
-    background: white;
-    color: var(--btn-bg-color2);
+    background-color: var(--btn-bg-color);
+    color: white;
 }

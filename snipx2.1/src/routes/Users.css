@@ -13,16 +13,18 @@
     background: transparent;
     color: var(--colored-text);
 }
+
 .form-inputs {
     display: flex;
-    flex-direction: row; /* Align elements vertically */
+    flex-direction: row; /* Align elements horizontally */
     align-items: center;
     gap: 15px; /* Add space between the form elements */
-}
-.form-title{
-    color: var(--colored-text);
+    flex-wrap: nowrap; /* Prevent wrapping to new lines */
 }
 
+.form-title {
+    color: var(--colored-text);
+}
 
 .page-title {
     font-size: 28px;
@@ -33,29 +35,40 @@
 
 .new-user-form {
     display: flex;
-    flex-direction: column; /* Align elements vertically */
-    align-items: flex-start; /* Align elements to the left */
+    flex-direction: column;
+    align-items: flex-start;
     margin-bottom: 20px;
 }
 
-
 .input-field {
-    height: 45px; /* Ensure consistent height for inputs*/
-    padding: 10px;
+    height: 45px;
+    padding: 10px 15px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     background-color: rgba(255, 255, 255, 0.8);
     color: #333;
     font-size: 16px;
-    box-sizing: border-box; /* Ensure padding doesn't affect height */
-}
-select{
-    margin-bottom: 20px;
-}
-.create-button{
-    margin-bottom: 28px;
+    box-sizing: border-box;
+    min-width: 250px; /* Ensure a minimum width for input fields */
+    flex-grow: 1; /* Allow the input field to grow and occupy available space */
 }
 
+select.input-field {
+    height: 45px; /* Ensure the same height for select elements */
+}
+
+.users-create-button {
+    height: 45px; /* Match button height with input fields */
+    padding: 10px 20px;
+    border-radius: 20px;
+    background-color: var(--btn-bg-color);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid var(--btn-bg-color); /* Add the border */
+    margin-top: -3px;
+}
 
 .users-table {
     margin-top: 20px;
@@ -72,9 +85,14 @@ table {
 
 th, td {
     padding: 12px 15px;
-    text-align: left;
     border-bottom: 1px solid #ddd;
 }
+
+/* Center the content of the Actions column */
+.centered-column {
+    text-align: center;
+}
+
 
 th {
     background-color: #f4f4f4;
@@ -86,18 +104,6 @@ tr:last-child td {
     border-bottom: none;
 }
 
-.edit-button, .delete-button, .save-button, .cancel-button {
-    background: linear-gradient(45deg, var(--btn-bg-color), var(--btn-bg-color2));
-    margin-right: 10px;
-    color: white;
-    padding: 8px 16px;
-    font-size: 14px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.edit-button:hover, .delete-button:hover {
-    background: white;
-    color: var(--btn-bg-color2);
+select {
+    margin-bottom: 0; /* Remove additional bottom margin */
 }

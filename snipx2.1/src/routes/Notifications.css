@@ -53,7 +53,6 @@
   table th, table td {
     padding: 12px;
     border: none; /* Remove borders for a cleaner look */
-    text-align: left;
     color: black; /* Apply black-text to the table data */
   }
   
