@@ -1,38 +1,52 @@
 import React from "react";
 import { Navigate, useOutlet, Link } from "react-router-dom";
 import { useAuth } from "../AuthProvider";
+import './ProtectedLayout.css';
 import { useAuthState } from "react-firebase-hooks/auth";
-import './ProtectedLayout.css'
 
 export const ProtectedLayout = () => {
-  // Getting auth functions and user details from Auth context using useAuth hook (local auth state)
-  const { user, checkDatabase, auth } = useAuth();
-  // Using useAuthState to get current Firebase auth state
-  const [firebaseUser] = useAuthState(auth);
-
+  const { user, loading, checkDatabase, auth } = useAuth(); // Get loading state from context
+  const [firebaseUser] = useAuthState(auth); // Firebase user state
   const outlet = useOutlet();
 
-  // If user authenticated in Firebase, but locally not, then check user on the backend to authenticate locally
-  if (!user.email && firebaseUser) {
-    checkDatabase(firebaseUser);
-  // If user don't authenticated both locally and in Firebase, navigate to Login page
-  } else if (!user.email) {
+  // If the user is still loading, show a loading indicator
+  if (loading) {
     return (
-    <div className="access-restricted">
-    <h1>Access Restricted</h1>
-    <p>You need to log in to access this page.</p>
-    <Link to="/login"  className="login-link">
-      Go to Login Page
-    </Link>
-  </div>
+      <div className="loading">
+        <h1>Loading...</h1>
+      </div>
     );
   }
 
+  // Check if the Firebase user exists but local user is not set yet
+  if (!user && firebaseUser) {
+    // Trigger backend check to set the local user
+    checkDatabase(firebaseUser);
+    return (
+      <div className="loading">
+        <h1>Checking user in database...</h1>
+      </div>
+    );
+  }
+
+  // If there's no user at all, navigate to the login page
+  if (!user || !user.email) {
+    return (
+      <div className="access-restricted">
+        <h1>Access Restricted</h1>
+        <p>You need to log in to access this page.</p>
+        <Link to="/login" className="login-link">
+          Go to Login Page
+        </Link>
+      </div>
+    );
+  }
+
+  // If the user is authenticated but not an admin, redirect to "Not Authorized"
   if (user.role !== "admin") {
-    // If the user is logged in but is not an admin, redirect to a "Not Authorized" page
     return <Navigate to="/not-authorized" />;
   }
-  
-  // If user authenticated, then show page that user tries to access
+
+  // Once everything is loaded and user is authorized, render the protected content
   return <>{outlet}</>;
 };

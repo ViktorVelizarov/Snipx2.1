@@ -20,22 +20,21 @@ const firebaseConfig = {
   appId: "1:173150664134:web:eda5d81c331ca3c2e2eec7",
   measurementId: "G-Q9FYTCBCT2",
 };
-// Initialize Firebase with the Firebase config, don't delete even that we don't use app const
+
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
 // Create a context for authentication
 const AuthContext = createContext();
 
 export const AuthProvider = () => {
-  // Use React Router's outlet and navigate hooks
   const outlet = useOutlet();
   const navigate = useNavigate();
   const api = useContext(apiUrl);
-  // Initialize Google auth provider and Firebase auth
   const googleProvider = new GoogleAuthProvider();
   const auth = getAuth();
   const [user, setUser] = useState(null);
-  console.log("current user:")
-  console.log(user)
+  const [loading, setLoading] = useState(true); // Add loading state
 
   const login = async () => {
     try {
@@ -48,46 +47,47 @@ export const AuthProvider = () => {
     }
   };
 
-  // Check if user is in the database (also on backend we verify user's token)
   const checkDatabase = (authResponse) => {
     const url = `${api}/api/snipx_auth/firebase`;
+    setLoading(true); // Set loading to true before making the API call
     axios
       .post(url, {
         idToken: authResponse.stsTokenManager.accessToken,
       })
       .then((response) => {
+        setLoading(false); // Set loading to false after response
         if (response.data.email) {
           setUser(response.data);
-          navigate("/login");
+          navigate("/home"); // Navigate to /home after successful check
         } else {
-          alert("You don't have acces :(");
+          alert("You don't have access :(");
         }
       })
       .catch((error) => {
+        setLoading(false); // Set loading to false on error
         console.log(error);
       });
   };
 
-  // logout user both locally and in firebase and navigate it to login page
   const logout = () => {
     signOut(auth).then(() => {
-      setUser("");
+      setUser(null);
       navigate("/login");
     });
   };
 
-  // Define the value provided to the AuthContext
   const value = useMemo(
     () => ({
       user,
+      loading, // Add loading to context
       login,
       logout,
       checkDatabase,
       auth,
     }),
-    [user]
+    [user, loading] // Include loading in dependencies
   );
-  // Provide the AuthContext to children
+
   return <AuthContext.Provider value={value}>{outlet}</AuthContext.Provider>;
 };
 
