@@ -8,6 +8,7 @@ function Teams() {
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [userSearchTerm, setUserSearchTerm] = useState("");
     const [users, setUsers] = useState([]);
+    const [editingTeam, setEditingTeam] = useState(null);  // Track the team being edited
     const { user } = useAuth();
 
     // Function to fetch teams
@@ -17,7 +18,7 @@ function Teams() {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user.token}`  // Assuming JWT token for authentication
+                    "Authorization": `Bearer ${user.token}`
                 }
             });
 
@@ -50,13 +51,11 @@ function Teams() {
         }
     };
 
-    // Fetch teams and users on component mount or when user changes
     useEffect(() => {
         fetchTeams();
         fetchUsers();
     }, [user]);
 
-    // Filter users based on search term
     const filteredUsers = users.filter(user =>
         user.email.toLowerCase().includes(userSearchTerm.toLowerCase())
     );
@@ -87,6 +86,51 @@ function Teams() {
         }
     };
 
+    // Function to handle editing a team
+    const handleEditTeam = async () => {
+        try {
+            const response = await fetch(`https://extension-360407.lm.r.appspot.com/api/teams/${editingTeam.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    team_name: newTeamName,
+                    userIds: selectedUsers,
+                }),
+            });
+            if (response.ok) {
+                await fetchTeams();
+                setEditingTeam(null);  // Reset after editing
+                setNewTeamName("");
+                setSelectedUsers([]);
+            } else {
+                console.error("Failed to edit team");
+            }
+        } catch (error) {
+            console.error("Error editing team:", error);
+        }
+    };
+
+    // Function to handle deleting a team
+    const handleDeleteTeam = async (teamId) => {
+        try {
+            const response = await fetch(`https://extension-360407.lm.r.appspot.com/api/teams/${teamId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            if (response.ok) {
+                await fetchTeams();  // Refresh teams after deletion
+            } else {
+                console.error("Failed to delete team");
+            }
+        } catch (error) {
+            console.error("Error deleting team:", error);
+        }
+    };
+
     // MultiSelectUsers component
     const MultiSelectUsers = ({ selectedUsers, setSelectedUsers }) => (
         <div className="multi-select-container">
@@ -114,11 +158,10 @@ function Teams() {
         <div className="teams-container">
             <h1 className="page-title">Teams</h1>
 
-            {/* New Team Form */}
+            {/* New/Edit Team Form */}
             <div className="new-team-form">
-                <h2 className="form-title">Add Team</h2>
+                <h2 className="form-title">{editingTeam ? "Edit Team" : "Add Team"}</h2>
                 <div className="team-creation-grid">
-                    {/* Column 1: Team Name */}
                     <div className="input-and-its-title">
                         <label className="input-title">Team Name:</label>
                         <input
@@ -130,7 +173,6 @@ function Teams() {
                         />
                     </div>
 
-                    {/* Column 2: Filter Users */}
                     <div className="input-and-its-title">
                         <label className="input-title">Filter Users:</label>
                         <input
@@ -142,21 +184,22 @@ function Teams() {
                         />
                     </div>
 
-                    {/* Column 3: Users Multi-Selector */}
                     <MultiSelectUsers
                         selectedUsers={selectedUsers}
                         setSelectedUsers={setSelectedUsers}
                     />
 
-                    {/* Column 4: Clear and Select Buttons */}
                     <div className="button-group">
                         <button className="clear-button" onClick={() => setSelectedUsers([])}>Clear All</button>
                         <button className="select-all-button" onClick={() => setSelectedUsers(filteredUsers.map(user => user.id))}>Select All</button>
                     </div>
 
-                    {/* Column 5: Create Button */}
                     <div className="button-group">
-                        <button onClick={handleCreateTeam} className="teams-create-button">Create</button>
+                        {editingTeam ? (
+                            <button onClick={handleEditTeam} className="teams-create-button">Update</button>
+                        ) : (
+                            <button onClick={handleCreateTeam} className="teams-create-button">Create</button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -181,8 +224,12 @@ function Teams() {
                                 <td>{team.teamMembers.map(member => users.find(user => user.id === member.user_id)?.email || "Unknown").join(", ")}</td>
                                 <td>{team.average_score.toFixed(1)}</td>
                                 <td>
-                                    <button className="edit-button">Edit</button>
-                                    <button className="delete-button">Delete</button>
+                                    <button className="edit-button" onClick={() => {
+                                        setEditingTeam(team);
+                                        setNewTeamName(team.team_name);
+                                        setSelectedUsers(team.teamMembers.map(member => member.user_id));
+                                    }}>Edit</button>
+                                    <button className="delete-button" onClick={() => handleDeleteTeam(team.id)}>Delete</button>
                                 </td>
                             </tr>
                         ))}
