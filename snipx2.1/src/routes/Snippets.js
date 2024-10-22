@@ -39,9 +39,9 @@ function Snippets() {
   useEffect(() => {
     const fetchSnippets = async () => {
       try {
-        const response = await fetch("https://extension-360407.lm.r.appspot.com/api/snipx_snippets");
-        const data = await response.json();
-        setSnippets(data);
+        console.log("userid:", user.id)
+        const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/company_snippets", user);
+        setSnippets(response.data);
       } catch (error) {
         console.error("Error fetching snippets:", error);
       }
