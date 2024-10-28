@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from "react";
 import './Notifications.css'; 
+import { useAuth } from "../AuthProvider";
+import axios from 'axios';
 
 function UserSkillHoursAndNotifications() {
     const [userSkillHours, setUserSkillHours] = useState([]);
     const [notifications, setNotifications] = useState([]);
+    const { user } = useAuth();
 
     // Function to fetch user skill hours
     const fetchUserSkillHours = async () => {
         try {
-            const response = await fetch("https://extension-360407.lm.r.appspot.com/api/user-skill-hours", {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                }
-            });
-
-            const data = await response.json();
-            console.log('Received user skill hours:', data);
-            setUserSkillHours(data);
-        } catch (error) {
+            console.log("userid:", user.id)
+            const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/user-skill-hours", user);
+            console.log('Received user skill hours:', response.data);
+                setUserSkillHours(response.data);
+          }  catch (error) {
             console.error("Error fetching user skill hours:", error);
         }
     };
