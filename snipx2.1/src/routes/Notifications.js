@@ -11,7 +11,6 @@ function UserSkillHoursAndNotifications() {
     // Function to fetch user skill hours
     const fetchUserSkillHours = async () => {
         try {
-            console.log("userid:", user.id)
             const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/user-skill-hours", user);
             console.log('Received user skill hours:', response.data);
                 setUserSkillHours(response.data);
@@ -19,21 +18,16 @@ function UserSkillHoursAndNotifications() {
             console.error("Error fetching user skill hours:", error);
         }
     };
-
+    
+    
     // Function to fetch notifications
     const fetchNotifications = async () => {
         try {
-            const response = await fetch("https://extension-360407.lm.r.appspot.com/api/notifications", {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                }
-            });
-
-            const data = await response.json();
-            console.log('Received notifications:', data);
-            setNotifications(data);
-        } catch (error) {
+            const response = await axios.post("https://extension-360407.lm.r.appspot.com/api/notifications", user);
+            console.log('Received notifications:', response.data);
+            setNotifications(response.data);
+          } 
+       catch (error) {
             console.error("Error fetching notifications:", error);
         }
     };
